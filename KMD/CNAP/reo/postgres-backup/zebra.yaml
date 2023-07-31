@@ -1,0 +1,129 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"postgres-operator.crunchydata.com/v1beta1","kind":"PostgresCluster","metadata":{"annotations":{"postgres-operator.crunchydata.com/pgbackrest-restore":"id2"},"creationTimestamp":"2023-05-25T21:39:24Z","finalizers":["postgres-operator.crunchydata.com/finalizer"],"generation":1,"name":"zebra","namespace":"postgres-crunchy","resourceVersion":"168691482","uid":"e47ad0f3-5379-402a-9ad4-1d298e197d37"},"spec":{"backups":{"pgbackrest":{"image":"registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4","repos":[{"name":"repo1","volume":{"volumeClaimSpec":{"accessModes":["ReadWriteOnce"],"dataSource":{"kind":"PersistentVolumeClaim","name":"elephant-repo1"},"resources":{"requests":{"storage":"1Gi"}}}}}],"restore":{"enabled":true,"options":["--type=time","--target='2023-05-25 21:41:29'"],"repoName":"repo1"}}},"dataSource":{"postgresCluster":{"clusterName":"elephant","repoName":"repo1"}},"image":"registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.6-2","instances":[{"dataVolumeClaimSpec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}}},"name":"instance1","replicas":1}],"port":5432,"postgresVersion":14,"userInterface":{"pgAdmin":{"dataVolumeClaimSpec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}}},"image":"registry.developers.crunchydata.com/crunchydata/crunchy-pgadmin4:ubi8-4.30-10","replicas":1}},"users":[{"databases":["zebra"],"name":"zebra"},{"databases":["zebra"],"name":"reo","options":"superuser"}]},"status":{"conditions":[{"lastTransitionTime":"2023-05-25T21:41:35Z","message":"pgBackRest dedicated repository host is ready","observedGeneration":1,"reason":"RepoHostReady","status":"True","type":"PGBackRestRepoHostReady"},{"lastTransitionTime":"2023-05-26T06:29:37Z","message":"pgBackRest replica create repo is ready for backups","observedGeneration":1,"reason":"StanzaCreated","status":"True","type":"PGBackRestReplicaRepoReady"},{"lastTransitionTime":"2023-05-26T06:29:37Z","message":"pgBackRest replica creation is now possible","observedGeneration":1,"reason":"RepoBackupComplete","status":"True","type":"PGBackRestReplicaCreate"},{"lastTransitionTime":"2023-05-26T06:29:00Z","message":"pgBackRest restore completed successfully","observedGeneration":1,"reason":"PGBackRestRestoreComplete","status":"True","type":"PostgresDataInitialized"}],"databaseRevision":"595bb5c466","instances":[{"name":"instance1","readyReplicas":1,"replicas":1,"updatedReplicas":1}],"monitoring":{"exporterConfiguration":"559c4c97d6"},"observedGeneration":1,"patroni":{"systemIdentifier":"7237225324278632537"},"pgbackrest":{"repoHost":{"apiVersion":"apps/v1","kind":"StatefulSet","ready":true},"repos":[{"bound":true,"name":"repo1","replicaCreateBackupComplete":true,"stanzaCreated":true,"volume":"pvc-aada9598-e28a-47eb-841f-9f49f330c396"}],"restore":{"completionTime":"2023-05-26T06:29:00Z","finished":true,"id":"id1","startTime":"2023-05-26T06:28:36Z","succeeded":1}},"proxy":{"pgBouncer":{"postgresRevision":"5c9966f6bc"}},"userInterface":{"pgAdmin":{"usersRevision":"679bb4b7b4"}},"usersRevision":"6957886b57"}}
+    postgres-operator.crunchydata.com/pgbackrest-restore: id3
+  creationTimestamp: "2023-05-25T21:39:24Z"
+  finalizers:
+  - postgres-operator.crunchydata.com/finalizer
+  generation: 2
+  name: zebra
+  namespace: postgres-crunchy
+  resourceVersion: "168827301"
+  uid: e47ad0f3-5379-402a-9ad4-1d298e197d37
+spec:
+  backups:
+    pgbackrest:
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
+      repos:
+      - name: repo1
+        volume:
+          volumeClaimSpec:
+            accessModes:
+            - ReadWriteOnce
+            dataSource:
+              kind: PersistentVolumeClaim
+              name: elephant-repo1
+            resources:
+              requests:
+                storage: 1Gi
+      restore:
+        enabled: true
+        repoName: repo1
+  dataSource:
+    postgresCluster:
+      clusterName: elephant
+      repoName: repo1
+  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.6-2
+  instances:
+  - dataVolumeClaimSpec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+    name: instance1
+    replicas: 1
+  port: 5432
+  postgresVersion: 14
+  userInterface:
+    pgAdmin:
+      dataVolumeClaimSpec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgadmin4:ubi8-4.30-10
+      replicas: 1
+  users:
+  - databases:
+    - zebra
+    name: zebra
+  - databases:
+    - zebra
+    name: reo
+    options: superuser
+status:
+  conditions:
+  - lastTransitionTime: "2023-05-25T21:41:35Z"
+    message: pgBackRest dedicated repository host is ready
+    observedGeneration: 2
+    reason: RepoHostReady
+    status: "True"
+    type: PGBackRestRepoHostReady
+  - lastTransitionTime: "2023-05-26T08:04:50Z"
+    message: pgBackRest replica create repo is ready for backups
+    observedGeneration: 2
+    reason: StanzaCreated
+    status: "True"
+    type: PGBackRestReplicaRepoReady
+  - lastTransitionTime: "2023-05-26T08:04:50Z"
+    message: pgBackRest replica creation is now possible
+    observedGeneration: 2
+    reason: RepoBackupComplete
+    status: "True"
+    type: PGBackRestReplicaCreate
+  - lastTransitionTime: "2023-05-26T08:04:34Z"
+    message: pgBackRest restore completed successfully
+    observedGeneration: 2
+    reason: PGBackRestRestoreComplete
+    status: "True"
+    type: PostgresDataInitialized
+  databaseRevision: 595bb5c466
+  instances:
+  - name: instance1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+  monitoring:
+    exporterConfiguration: 559c4c97d6
+  observedGeneration: 2
+  patroni:
+    systemIdentifier: "7237225324278632537"
+  pgbackrest:
+    repoHost:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      ready: true
+    repos:
+    - bound: true
+      name: repo1
+      replicaCreateBackupComplete: true
+      stanzaCreated: true
+      volume: pvc-aada9598-e28a-47eb-841f-9f49f330c396
+    restore:
+      completionTime: "2023-05-26T08:04:34Z"
+      finished: true
+      id: id2
+      startTime: "2023-05-26T08:04:03Z"
+      succeeded: 1
+  proxy:
+    pgBouncer:
+      postgresRevision: 5c9966f6bc
+  userInterface:
+    pgAdmin:
+      usersRevision: 679bb4b7b4
+  usersRevision: 6957886b57

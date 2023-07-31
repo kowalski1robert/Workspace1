@@ -1,0 +1,31 @@
+{{ if .Values.cnap.nexus.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nexus
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  destination:
+    namespace: nexus
+    server: https://kubernetes.default.svc
+  source:
+    path: helm-nexus
+    repoURL: https://github.com/KMD-A-S-CNAP/cnap-components-nexus
+    targetRevision: HEAD
+    helm:
+      parameters:
+        - name: "pvc.storage.size"
+          value: "25Gi"
+  project: argocd-cnap-app-of-apps-project
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/managed-by: openshift-gitops
+{{ end }}

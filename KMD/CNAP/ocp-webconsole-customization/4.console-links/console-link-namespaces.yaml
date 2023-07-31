@@ -1,0 +1,14 @@
+# The link is available at the bottom of every namespace resource (Administration/Namespaces/<namespace>)
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: namespaced-dashboard-link-for-all-namespaces
+spec:
+  href: "https://www.example.com"
+  location: NamespaceDashboard
+  text: This appears in all namespaces
+  # to make link appear only in some namespaces:
+  # namespaceDashboard:
+  #   namespaces:
+  #     - namespace1
+  #     - namespace2...

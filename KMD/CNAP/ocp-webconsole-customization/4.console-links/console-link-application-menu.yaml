@@ -1,0 +1,12 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: application-menu-link-1
+spec:
+  href: "https://www.example.com"
+  location: ApplicationMenu
+  text: Link 2
+  applicationMenu:
+    section: Some text (delcarable) # name for section
+    # image that is 24x24 in size
+    imageURL: https://via.placeholder.com/24 # image for icon (left from link)

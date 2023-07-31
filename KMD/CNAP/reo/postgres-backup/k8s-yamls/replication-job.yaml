@@ -1,0 +1,89 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: hippo-pgbackrest-deltarestore
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        job-name: hippo-pgbackrest-deltarestore
+    spec:
+      restartPolicy: Never
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: pgbackrest
+          command:
+            - bash
+            - -ceu
+            - --
+            - |-
+              /opt/crunchy/bin/pgbackrest-restore.sh
+          env:
+            - name: COMMAND
+              value: restore
+            - name: PGBACKREST_DELTA
+              value: "y"
+            - name: PGBACKREST_PG1_PATH
+              value: /pgdata/pg14
+            - name: PGBACKREST_STANZA
+              value: db
+            - name: BACKREST_CUSTOM_OPTS
+              value: "--type=none --repo=1 --delta --link-map=pg_wal=/pgdata/pg14_wal"
+            - name: SELECTOR
+              value: postgres-operator.crunchydata.com/cluster=accountdb,postgres-operator.crunchydata.com/pgbackrest=,postgres-operator.crunchydata.com/pgbackrest-dedicated=
+          securityContext:
+            privileged: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /etc/pgbackrest/conf.d
+              name: pgbackrest-config
+              readOnly: true
+            - mountPath: /tmp
+              name: tmp
+            - name: pgdata
+              mountPath: /pgdata
+          terminationMessagePolicy: File
+          image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 26
+      serviceAccount: hippo-pgbackrest
+      serviceAccountName: hippo-pgbackrest
+      volumes:
+        - emptyDir:
+            sizeLimit: 16Mi
+          name: tmp
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: hippo-repo1-cloned
+        - name: pgbackrest-config
+          projected:
+            defaultMode: 420
+            sources:
+              - configMap:
+                  name: hippo-pgbackrest-config
+                  items:
+                    - key: pgbackrest_instance.conf
+                      path: pgbackrest_instance.conf
+                    - key: config-hash
+                      path: config-hash
+              - secret:
+                  items:
+                    - key: pgbackrest.ca-roots
+                      path: ~postgres-operator/tls-ca.crt
+                    - key: pgbackrest-client.crt
+                      path: ~postgres-operator/client-tls.crt
+                    - key: pgbackrest-client.key
+                      mode: 384
+                      path: ~postgres-operator/client-tls.key
+                  name: hippo-pgbackrest
+      dnsPolicy: ClusterFirst

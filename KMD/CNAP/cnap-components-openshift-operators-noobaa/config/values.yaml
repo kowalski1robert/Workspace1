@@ -1,0 +1,10 @@
+subscription:
+  name: odf-operator
+  namespace: openshift-storage
+  channel: stable-4.12
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: odf-operator.v4.12.4-rhodf
+noobaa:
+  size: "50Gi"
+  storageClass: ""

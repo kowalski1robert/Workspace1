@@ -1,0 +1,5 @@
+apiVersion: v2
+name: cnap-components-openshift-noobaa
+description: A Helm chart for noobaa
+type: application
+version: 0.1.0

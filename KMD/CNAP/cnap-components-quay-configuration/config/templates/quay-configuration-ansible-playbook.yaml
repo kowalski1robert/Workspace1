@@ -1,0 +1,390 @@
+apiVersion: v1
+data:
+  quay-configuration_defaults_main.yaml: |
+    quay_project_name: quay-cnap
+    quay_admin_username: quaycnapadmin
+    quay_admin_email: quaycnapadmin@redhat.com
+    quay_admin_password: quaypass123
+    quay_registry_name: cnap-registry
+    quay_org_name: cnap
+    quay_secret_name: quay-robot-secret
+    quay_buildah_secret_name: kaniko-quay-secret
+    quay_admin_secret_name: quay-admin-secret
+    quay_repositories:
+      - cnap-examples-java-maven
+    quay_robot_account: cnap_robot
+    pipeline_namespace: cicd
+    csrf_pattern: ".*window.__token\ =\ '(.*)';.*"
+    #Can obtain status codes from Swagger of quay route/api/v1/discovery
+    quay_user_found_success_status_code: 200
+    quay_org_not_found_error_code: 404
+    quay_org_found_success_status_code: 200
+    quay_org_created_success_status_code: 201
+    quay_repo_not_found_error_code: 404
+    quay_repo_found_success_status_code: 200
+    quay_repo_created_success_status_code: 201
+    quay_robot_not_found_error_code: 400
+    quay_robot_found_success_status_code: 200
+    quay_robot_created_success_status_code: 201
+    quay_perm_success_status_code: 200
+    secret_required_namespaces:
+      - cicd
+      - devsecops-dev
+      - devsecops-qa
+  quay-configuration_tasks_configure-quay-secrets.yaml: "- name: Check if Quay Secret
+    Exists\n  kubernetes.core.k8s_info:\n      kind: Secret\n      name: \"{{ quay_secret_name
+    }}\"\n      namespace: \"{{ pipeline_namespace }}\"\n  register: secret_check_status\n\n-
+    name: extract quay hostname\n  shell: |\n    oc get route {{ quay_registry_name
+    }}-quay -o jsonpath='{.spec.host}' -n {{ quay_project_name }}\n  register: quay_hostname_result\n
+    \ delay: 5\n  retries: 10\n  until:\n    - quay_hostname_result.stdout != \"\"\n\n-
+    name: Set Quay hostname\n  ansible.builtin.set_fact:\n    quay_route: \"{{ quay_hostname_result.stdout
+    }}\"\n\n- name: Link Quay Secret to Pipeline ServiceAccount for Pipeline Namespace\n
+    \ shell: | \n    oc secrets link pipeline \"{{ quay_secret_name }}\" --for=pull,mount
+    -n {{ pipeline_namespace }}\n\n- name: Link Quay Admin Secret to Pipeline ServiceAccount
+    for Pipeline Namespace\n  shell: |\n    oc secrets link pipeline \"{{ quay_admin_secret_name
+    }}\" --for=pull,mount -n {{ pipeline_namespace }}    \n\n- name: Link Quay Secret
+    to default accounts for namespaces that should pull from quay\n  shell: | \n    oc
+    secrets link default \"{{ quay_secret_name }}\" --for=pull,mount -n {{ item }}\n
+    \ loop: \"{{ secret_required_namespaces }}\"\n\n\n- name: Patch Openshift Image
+    Config - Message\n  ansible.builtin.debug:\n    msg: \"As we did not generate
+    a cert, we need to add our quay registry as an insecure registry in Openshift\"\n\n-
+    name: Patch Openshift Image Config\n  ansible.builtin.shell: |\n    oc patch image.config.openshift.io
+    cluster --type=merge -p '{\"spec\":{\"registrySources\":{\"insecureRegistries\":[\"{{
+    quay_route }}\"]}}}'\n  register: insecure_patch  \n\n- name: Pause for 4 minutes
+    to wait for MCP to receive changes\n  ansible.builtin.pause:\n    minutes: 4\n
+    \ when: \"'no change' not in insecure_patch.stdout\"\n"
+  quay-configuration_tasks_configure-quay.yaml: "# Code attribution\n# Some code from
+    here - https://github.com/redhat-cop/rhel-edge-automation-arch/blob/main/ansible/roles/quay-raw-create-user/tasks/main.yaml\n\n-
+    name: extract quay hostname\n  shell: |\n    oc get route {{ quay_registry_name
+    }}-quay -o jsonpath='{.spec.host}' -n {{ quay_project_name }}\n  register: quay_hostname_result\n
+    \ delay: 5\n  retries: 10\n  until:\n    - quay_hostname_result.stdout != \"\"\n\n-
+    name: Set Quay hostname\n  ansible.builtin.set_fact:\n    quay_route: \"{{ quay_hostname_result.stdout
+    }}\"\n\n- name: Wait until Quay Application is Responding\n  ansible.builtin.uri:\n
+    \   return_content: yes\n    status_code: 200\n    url: \"https://{{ quay_route
+    }}\"\n    validate_certs: no\n  delay: 10\n  register: quay_check\n  retries:
+    30\n  until:\n    quay_check.status == 200\n\n- name: Initialize Quay User\n  ansible.builtin.uri:\n
+    \   body_format: json\n    body:\n      username: \"{{ quay_admin_username }}\"\n
+    \     email: \"{{ quay_admin_email }}\"\n      password: \"{{ quay_admin_password
+    }}\"\n      access_token: \"true\"\n    headers:\n      Content-Type: application/json\n
+    \   method: POST\n    url: \"https://{{ quay_route }}/api/v1/user/initialize\"\n
+    \   validate_certs: no\n  register: quay_init_response\n  failed_when:\n    -
+    quay_init_response.status != 200\n  ignore_errors: true\n\n- name: Set Output
+    Message from Quay on User Initalize\n  ansible.builtin.set_fact:\n    init_output_msg:
+    \"{{ quay_init_response.json.message|default('') }}\"\n  ignore_errors: true\n\n-
+    name: Use API Token to continue Creating\n  block:\n    \n    - name: Set Quay
+    Access Token\n      ansible.builtin.set_fact:\n        quay_access_token: \"{{
+    quay_init_response.json.access_token }}\"\n\n    - name: Check if Quay Organization
+    Exists\n      ansible.builtin.uri:\n        body_format: json\n        headers:\n
+    \         Content-Type: application/json\n          Authorization: \"Bearer {{
+    quay_access_token }}\"\n        method: GET\n        url: \"https://{{ quay_route
+    }}/api/v1/organization/{{ quay_org_name }}\"\n        validate_certs: no\n      register:
+    quay_org_check\n      failed_when: >\n        (quay_org_check.status != quay_org_not_found_error_code)
+    and\n        (quay_org_check.status != quay_org_found_success_status_code)\n\n
+    \   - name: Create Quay Organization\n      ansible.builtin.uri:\n        body_format:
+    json\n        body:\n          name: \"{{ quay_org_name }}\"\n        headers:\n
+    \         Content-Type: application/json\n          Authorization: \"Bearer {{
+    quay_access_token }}\"\n        method: POST\n        url: \"https://{{ quay_route
+    }}/api/v1/organization/\"\n        validate_certs: no\n      register: quay_org_response\n
+    \     failed_when:\n        - quay_org_response.status != quay_org_created_success_status_code\n
+    \     when: quay_org_check.status|default(\"\") == quay_org_not_found_error_code\n\n
+    \   - name: Check if Repository Already Exists\n      ansible.builtin.uri:\n        body_format:
+    json\n        headers:\n          Content-Type: application/json\n          Authorization:
+    \"Bearer {{ quay_access_token }}\"\n        method: GET\n        url: \"https://{{
+    quay_route }}/api/v1/repository/{{ quay_org_name }}/{{ item }}\"\n        validate_certs:
+    no\n      register: quay_repo_check\n      failed_when:\n        (quay_repo_check.status
+    != quay_repo_not_found_error_code) and\n        (quay_repo_check.status != quay_repo_found_success_status_code)\n\n
+    \   - name: Create Repository\n      ansible.builtin.uri:\n        body_format:
+    json\n        body:\n          repository: \"{{ item }}\"\n          namespace:
+    \"{{ quay_org_name }}\"\n          repo_kind: \"image\"          \n          visibility:
+    \"public\"\n          description: \"Repo for CICD Demo\"         \n        headers:\n
+    \         Content-Type: application/json\n          Authorization: \"Bearer {{
+    quay_access_token }}\"\n        method: POST\n        url: \"https://{{ quay_route
+    }}/api/v1/repository\"\n        validate_certs: no\n      register: quay_repo_response\n
+    \     failed_when:\n        - quay_repo_response.status != quay_repo_created_success_status_code\n
+    \     when: quay_repo_check.status|default(\"\") == quay_repo_not_found_error_code\n\n
+    \   - name: Check if Robot Account Already Exists\n      ansible.builtin.uri:\n
+    \       body_format: json\n        headers:\n          Content-Type: application/json\n
+    \         Authorization: \"Bearer {{ quay_access_token }}\"\n        method: GET\n
+    \       url: \"https://{{ quay_route }}/api/v1/organization/{{ quay_org_name }}/robots/{{
+    quay_robot_account }}\"\n        validate_certs: no\n      register: quay_robot_check\n
+    \     failed_when: >\n        (quay_robot_check.status != quay_robot_not_found_error_code)
+    and\n        (quay_robot_check.status != quay_robot_found_success_status_code)\n\n
+    \   - name: Set Robot Token from Check Response\n      ansible.builtin.set_fact:\n
+    \       quay_robot_token: \"{{ quay_robot_check.json.token }}\"\n      when: quay_robot_check.status|default(\"\")
+    == quay_robot_found_success_status_code\n\n    - name: Create Robot Account\n
+    \     ansible.builtin.uri:\n        body_format: json\n        body:\n          description\":
+    \"Robot Account for CICD Demo\"\n        headers:\n          Content-Type: application/json\n
+    \         Authorization: \"Bearer {{ quay_access_token }}\"\n        method: PUT\n
+    \       url: \"https://{{ quay_route }}/api/v1/organization/{{ quay_org_name }}/robots/{{
+    quay_robot_account }}\"\n        validate_certs: no\n      register: quay_robot_response\n
+    \     failed_when:\n        - quay_robot_response.status != quay_robot_created_success_status_code\n
+    \     when: quay_robot_check.status == quay_robot_not_found_error_code\n    \n
+    \   - name: Set Robot Token from Creating New Robot Account\n      ansible.builtin.set_fact:\n
+    \       quay_robot_token: \"{{ quay_robot_response.json.token }}\"\n      when:
+    quay_robot_response.status|default(\"\") == quay_robot_created_success_status_code\n\n
+    \   - name: Add Robot account permissions to repo\n      ansible.builtin.uri:\n
+    \       body_format: json\n        body:\n          role: admin    \n        headers:\n
+    \         Content-Type: application/json\n          Authorization: \"Bearer {{
+    quay_access_token }}\"\n        method: PUT\n        url: \"https://{{ quay_route
+    }}/api/v1/repository/{{ quay_org_name }}/{{ item }}/permissions/user/{{ quay_org_name
+    }}+{{ quay_robot_account }}\"\n        validate_certs: no\n      register: quay_perm_response\n
+    \     failed_when:\n        - quay_perm_response.status != quay_perm_success_status_code\n
+    \ when: \n    - \"'Cannot initialize user in a non-empty database' not in init_output_msg\"\n\n-
+    name: Use Manual Login to try get token\n  block:\n    - name: Wait for Quay Application
+    and Load Initial CSRF Token\n      ansible.builtin.uri:\n        return_content:
+    yes\n        status_code: 200\n        url: \"https://{{ quay_route }}\"\n        validate_certs:
+    no\n      delay: 10\n      register: quay_app_response\n      retries: 2\n\n    -
+    name: Set CSRF Token\n      ansible.builtin.set_fact:\n        x_csrf_token: \"{{
+    quay_app_response.content | regex_search(csrf_pattern, '\\\\1', multiline=True)
+    | first }}\"\n\n    - name: Try and Create a new session\n      ansible.builtin.uri:\n
+    \       body_format: json\n        body:\n          username: \"{{ quay_admin_username
+    }}\"\n          email: \"{{ quay_admin_email }}\"\n          password: \"{{ quay_admin_password
+    }}\"\n        headers:\n          cookie: \"{{ quay_app_response.cookies_string
+    }}\"\n          x-csrf-token: \"{{ x_csrf_token | urlencode }}\"\n          Content-Type:
+    application/json\n        method: POST\n        url: \"https://{{ quay_route }}/api/v1/signin\"\n
+    \       validate_certs: no\n        follow_redirects: all\n      register: quay_session_response\n
+    \     failed_when:\n        - quay_session_response.status != 200\n        - quay_session_response.json.success
+    != \"true\"\n\n    - name: Get Next CSRF Token\n      ansible.builtin.set_fact:\n
+    \       x_next_csrf_token: \"{{ quay_session_response.x_next_csrf_token }}\"\n\n
+    \   - name: Get user Information\n      ansible.builtin.uri:\n        body_format:
+    json\n        headers:\n          cookie: \"{{ quay_app_response.cookies_string
+    }}\"\n          x-csrf-token: \"{{ x_csrf_token | urlencode }}\"\n          Content-Type:
+    application/json\n        method: GET\n        url: \"https://{{ quay_route }}/api/v1/users/{{
+    quay_admin_username }}\"\n        validate_certs: no\n        follow_redirects:
+    all\n      register: quay_user_response\n      failed_when:\n        - quay_session_response.status
+    != quay_user_found_success_status_code\n\n    - name: Set Present Cookie String
+    from User Info Response\n      ansible.builtin.set_fact:\n        present_cookie_string:
+    \"{{ quay_session_response.cookies_string }}\"\n\n    - name: Check if Quay Organization
+    Exists\n      ansible.builtin.uri:\n        body_format: json\n        headers:\n
+    \         cookie: \"{{ present_cookie_string }}\"\n          Content-Type: application/json\n
+    \         x-csrf-token: \"{{ x_next_csrf_token | urlencode }}\"\n        method:
+    GET\n        url: \"https://{{ quay_route }}/api/v1/organization/{{ quay_org_name
+    }}\"\n        validate_certs: no\n      register: quay_org_check\n      failed_when:
+    >\n        (quay_org_check.status != quay_org_not_found_error_code) and\n        (quay_org_check.status
+    != quay_org_found_success_status_code)\n\n    - name: Set Present Cookie String
+    from Org Check Response\n      ansible.builtin.set_fact:\n        present_cookie_string:
+    \"{{ quay_org_check.cookies_string }}\"\n      when: quay_org_check.status|default(\"\")
+    == quay_org_found_success_status_code\n\n    - name: Create Quay Organization\n
+    \     ansible.builtin.uri:\n        body_format: json\n        body:\n          name:
+    \"{{ quay_org_name }}\"\n        headers:\n          cookie: \"{{ quay_session_response.cookies_string
+    }}\"\n          Content-Type: application/json\n          x-csrf-token: \"{{ x_next_csrf_token
+    | urlencode }}\"\n        method: POST\n        url: \"https://{{ quay_route }}/api/v1/organization/\"\n
+    \       validate_certs: no\n      register: quay_org_response\n      failed_when:\n
+    \       - quay_org_response.status != quay_org_created_success_status_code\n      when:
+    quay_org_check.status|default(\"\") == quay_org_not_found_error_code\n\n    -
+    name: Set Present Cookie String from Org Creation Response\n      ansible.builtin.set_fact:\n
+    \       present_cookie_string: \"{{ quay_org_response.cookies_string }}\"\n      when:
+    quay_org_response.status|default(\"\") == quay_org_created_success_status_code\n\n
+    \   - name: Check if Repository Already Exists\n      ansible.builtin.uri:\n        body_format:
+    json\n        headers:\n          cookie: \"{{ present_cookie_string }}\"\n          Content-Type:
+    application/json\n          x-csrf-token: \"{{ x_next_csrf_token | urlencode }}\"\n
+    \       method: GET\n        url: \"https://{{ quay_route }}/api/v1/repository/{{
+    quay_org_name }}/{{ item }}\"\n        validate_certs: no\n      register: quay_repo_check\n
+    \     failed_when:\n        (quay_repo_check.status != quay_repo_not_found_error_code)
+    and\n        (quay_repo_check.status != quay_repo_found_success_status_code)\n\n
+    \   - name: Set Cookie String From Repo Check Response\n      ansible.builtin.set_fact:\n
+    \       present_cookie_string: \"{{ quay_repo_check.cookies_string }}\"\n      when:
+    quay_repo_check.status|default(\"\") == quay_repo_found_success_status_code\n\n
+    \   - name: Create Repository\n      ansible.builtin.uri:\n        body_format:
+    json\n        body:\n          repository: \"{{ item }}\"\n          namespace:
+    \"{{ quay_org_name }}\"\n          repo_kind: \"image\"          \n          visibility:
+    \"public\"\n          description: \"Repo for CNAP\"\n        headers:\n          Content-Type:
+    application/json\n          cookie: \"{{ present_cookie_string }}\"\n          x-csrf-token:
+    \"{{ x_next_csrf_token | urlencode }}\"\n        method: POST\n        url: \"https://{{
+    quay_route }}/api/v1/repository\"\n        validate_certs: no\n      register:
+    quay_repo_response\n      failed_when:\n        - quay_repo_response.status !=
+    quay_repo_created_success_status_code\n      when: quay_repo_check.status|default(\"\")
+    == quay_repo_not_found_error_code\n\n    - name: Set Cookie String From Repo Creation
+    Response\n      ansible.builtin.set_fact:\n        present_cookie_string: \"{{
+    quay_repo_response.cookies_string }}\"\n      when: quay_repo_response.status|default(\"\")
+    == quay_repo_created_success_status_code\n\n    - name: Check if Robot Account
+    Already Exists\n      ansible.builtin.uri:\n        body_format: json\n        headers:\n
+    \         cookie: \"{{ present_cookie_string }}\"\n          Content-Type: application/json\n
+    \         x-csrf-token: \"{{ x_next_csrf_token | urlencode }}\"\n        method:
+    GET\n        url: \"https://{{ quay_route }}/api/v1/organization/{{ quay_org_name
+    }}/robots/{{ quay_robot_account }}\"\n        validate_certs: no\n      register:
+    quay_robot_check\n      failed_when: >\n        (quay_robot_check.status != quay_robot_not_found_error_code)
+    and\n        (quay_robot_check.status != quay_robot_found_success_status_code)\n\n
+    \   - name: Set Robot Token from Check Response\n      ansible.builtin.set_fact:\n
+    \       quay_robot_token: \"{{ quay_robot_check.json.token }}\"\n      when: quay_robot_check.status|default(\"\")
+    == quay_robot_found_success_status_code\n\n    - name: Set Cookie String From
+    Robot Check Response\n      ansible.builtin.set_fact:\n        present_cookie_string:
+    \"{{ quay_robot_check.cookies_string }}\"\n      when: quay_robot_check.status|default(\"\")
+    == quay_robot_found_success_status_code\n\n    - name: Create Robot Account\n
+    \     ansible.builtin.uri:\n        body_format: json\n        body:\n          description\":
+    \"Robot Account for CICD Demo\"\n        headers:\n          Content-Type: application/json\n
+    \         cookie: \"{{ present_cookie_string }}\"\n          x-csrf-token: \"{{
+    x_next_csrf_token | urlencode }}\"\n        method: PUT\n        url: \"https://{{
+    quay_route }}/api/v1/organization/{{ quay_org_name }}/robots/{{ quay_robot_account
+    }}\"\n        validate_certs: no\n      register: quay_robot_response\n      failed_when:\n
+    \       - quay_robot_response.status != quay_robot_created_success_status_code\n
+    \     when: quay_robot_check.status == quay_robot_not_found_error_code\n    \n
+    \   - name: Set Robot Token from Creating New Robot Account\n      ansible.builtin.set_fact:\n
+    \       quay_robot_token: \"{{ quay_robot_response.json.token }}\"\n      when:
+    quay_robot_response.status|default(\"\") == quay_robot_created_success_status_code\n\n
+    \   - name: Set Cookie String From Robot Creation\n      ansible.builtin.set_fact:\n
+    \       present_cookie_string: \"{{ quay_robot_response.cookies_string }}\"\n
+    \     when: quay_robot_response.status|default(\"\") == quay_robot_created_success_status_code\n\n
+    \   - name: Add Robot account permissions to repo\n      ansible.builtin.uri:\n
+    \       body_format: json\n        body:\n          role: admin    \n        headers:\n
+    \         Content-Type: application/json\n          cookie: \"{{ present_cookie_string
+    }}\"\n          x-csrf-token: \"{{ x_next_csrf_token | urlencode }}\"\n        method:
+    PUT\n        url: \"https://{{ quay_route }}/api/v1/repository/{{ quay_org_name
+    }}/{{ item }}/permissions/user/{{ quay_org_name }}+{{ quay_robot_account }}\"\n
+    \       validate_certs: no\n      register: quay_perm_response\n      failed_when:\n
+    \       - quay_perm_response.status != quay_perm_success_status_code\n  when:
+    \n    - \"'Cannot initialize user in a non-empty database' in init_output_msg\"
+    \n\n- name: Delete any Previously Existing Quay Secret\n  kubernetes.core.k8s:\n
+    \   state: absent\n    api_version: v1\n    kind: Secret\n    namespace: \"{{
+    item }}\"\n    name: \"{{ quay_secret_name }}\"\n    wait: yes\n  loop: \"{{ secret_required_namespaces
+    }}\"\n\n#Create Quay Secret so other roles can use\n- name: Create Quay Secret
+    in Namespaces that require secret\n  shell: |\n    oc create secret docker-registry
+    \"{{ quay_secret_name }}\" --docker-server=\"{{ quay_route }}\" --docker-username=\"{{
+    quay_org_name }}+{{ quay_robot_account }}\" --docker-password=\"{{ quay_robot_token
+    }}\" --docker-email=\"\" -n \"{{ item }}\"\n  loop: \"{{ secret_required_namespaces
+    }}\"\n\n- name: Create Quay Secret for use by buildah task - it needs a config.json
+    with auth instead of .dockerconfigjson\n  ignore_errors: true\n  shell: |\n    oc
+    get secret \"{{ quay_secret_name }}\" -o json -n \"{{ item }}\" | sed 's/\\.dockerconfigjson/config.json/g'
+    | sed 's/kubernetes.io\\/dockerconfigjson/Opaque/g' | sed 's/{{ quay_secret_name
+    }}/{{ quay_buildah_secret_name }}/g' | oc apply -f -\n  loop: \"{{ secret_required_namespaces
+    }}\"\n\n- name: Confirm Quay Secret is Created\n  kubernetes.core.k8s:\n    state:
+    present\n    api_version: v1\n    kind: Secret\n    namespace: \"{{ item }}\"\n
+    \   name: \"{{ quay_secret_name }}\"\n    wait: yes\n  loop: \"{{ secret_required_namespaces
+    }}\"\n\n\n#Create Quay Secret so other roles can use\n- name: Create Quay Admin
+    Secret in Namespaces that require secret\n  shell: |\n    oc create secret generic
+    \"{{ quay_admin_secret_name }}\" --from-literal=QUAY_ADMIN_USERNAME=\"{{ quay_admin_username
+    }}\" --from-literal=QUAY_ADMIN_PASSWORD=\"{{ quay_admin_password }}\" --from-literal=QUAY_ADMIN_EMAIL=\"{{
+    quay_admin_email }}\" -n \"{{ pipeline_namespace }}\"\n"
+  quay-configuration_tasks_install-quay.yaml: "- name: Create OpenShift Objects to
+    install Quay\n  kubernetes.core.k8s:\n    state: present\n    definition: \"{{
+    lookup('template', item ) | from_yaml }}\"\n  loop:\n  - ./templates/quay-subscription.yaml.j2\n
+    \ - ./templates/quay-namespace.yaml.j2\n\n#TODO: manual install plan approval\n\n#Only
+    necessary if Quay not managing storage\n# - name: Get NooBaa Secret\n#   shell:
+    |\n#     oc get noobaa/noobaa -n openshift-storage -o json | jq -r '.status.accounts.admin.secretRef.name'\n#
+    \  register: noobaa_secret\n\n# - name: Set NooBaa Secret Value\n#   ansible.builtin.set_fact:\n#
+    \    NOOBAA_SECRET: \"{{ noobaa_secret.stdout }}\"\n\n# - name: Get NooBaa Mgmt
+    Address\n#   shell: |\n#     oc get noobaa noobaa -n openshift-storage -o json
+    | jq -r '.status.services.serviceMgmt.nodePorts[0]'\n#   register: noobaa_mgmt\n\n#
+    - name: Set NooBaa Mgmt Address\n#   ansible.builtin.set_fact:\n#     NOOBAA_MGMT:
+    \"{{ noobaa_mgmt.stdout }}\"\n\n# - name: Get NooBaa S3 Address\n#   shell: |\n#
+    \    oc get noobaa noobaa -n openshift-storage -o json | jq -r '.status.services.serviceS3.nodePorts[0]'\n#
+    \  register: noobaa_s3\n\n# - name: Set NooBaa S3 Address\n#   ansible.builtin.set_fact:\n#
+    \    NOOBAA_S3: \"{{ noobaa_s3.stdout }}\"\n\n# - name: Get NooBaa Access Key\n#
+    \  shell: |\n#     oc get secret \"{{ NOOBAA_SECRET }}\" -n openshift-storage
+    -o json | jq -r '.data.AWS_ACCESS_KEY_ID|@base64d'\n#   register: noobaa_access_key\n\n#
+    - name: Set NooBaa Access Key\n#   ansible.builtin.set_fact:\n#     NOOBAA_ACCESS_KEY:
+    \"{{ noobaa_access_key.stdout }}\"\n\n# - name: Get NooBaa Secret Key\n#   shell:
+    |\n#     oc get secret $NOOBAA_SECRET -n openshift-storage -o json | jq -r '.data.AWS_SECRET_ACCESS_KEY|@base64d'\n#
+    \  register: noobaa_secret_key\n\n# - name: Set NooBaa Secret Key\n#   ansible.builtin.set_fact:\n#
+    \    NOOBAA_SECRET_KEY: \"{{ noobaa_secret_key.stdout }}\"\n\n- name: Wait for
+    QuayRegistry CRD to exist\n  kubernetes.core.k8s_info:\n    api_version: \"apiextensions.k8s.io/v1\"\n
+    \   kind: CustomResourceDefinition\n    name: \"quayregistries.quay.redhat.com\"\n
+    \ register: crds\n  until: crds.resources|length > 0\n  retries: 30\n  delay:
+    10\n\n- name: Create Quay Registry Object\n  kubernetes.core.k8s:\n    state:
+    present\n    definition: \"{{ lookup('template', item ) | from_yaml }}\"\n  loop:\n
+    \ - ./templates/quay-config-secret.yaml.j2\n  - ./templates/quayregistry.yaml.j2\n\n\n\n\n\n\n\n\n
+    \ \n\n"
+  quay-configuration_tasks_main.yaml: |-
+    - import_tasks: install-quay.yaml
+
+    - include_tasks: configure-quay.yaml
+      loop: "{{ quay_repositories }}"
+
+    - include_tasks: configure-quay-secrets.yaml
+  quay-configuration_templates_quay-config-secret.yaml.j2: |+
+    apiVersion: v1
+    stringData:
+      config.yaml: |
+        FEATURE_GENERAL_OCI_SUPPORT: true
+        FEATURE_USER_INITIALIZE: true
+        BROWSER_API_CALLS_XHR_ONLY: false
+        SUPER_USERS:
+        - {{ quay_admin_username }}
+        FEATURE_USER_CREATION: false
+    kind: Secret
+    metadata:
+      name: quay-config-bundle
+      namespace: {{ quay_project_name }}
+    type: Opaque
+
+
+
+  quay-configuration_templates_quay-namespace.yaml.j2: |-
+    kind: Namespace
+    apiVersion: v1
+    metadata:
+      name: {{ quay_project_name }}
+      labels:
+        kubernetes.io/metadata.name: {{ quay_project_name }}
+      annotations:
+        openshift.io/node-selector: 'node-role.kubernetes.io/infra='
+        scheduler.alpha.kubernetes.io/defaultTolerations: >-
+          [{"operator": "Exists", "effect": "NoSchedule", "key":
+          "node-role.kubernetes.io/infra"}
+          ]
+    spec: {}
+  quay-configuration_templates_quay-subscription.yaml.j2: |
+    apiVersion: operators.coreos.com/v1alpha1
+    kind: Subscription
+    metadata:
+      name: quay-operator
+      namespace: openshift-operators
+    spec:
+      channel: stable-3.7
+      installPlanApproval: Automatic
+      name: quay-operator
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+  quay-configuration_templates_quayregistry.yaml.j2: |
+    apiVersion: quay.redhat.com/v1
+    kind: QuayRegistry
+    metadata:
+      name: {{ quay_registry_name }}
+      namespace: {{ quay_project_name }}
+    spec:
+      configBundleSecret: quay-config-bundle
+      components:
+        - managed: true
+          kind: clair
+        - managed: true
+          kind: postgres
+        - managed: true
+          kind: objectstorage
+        - managed: true
+          kind: redis
+        - managed: true
+          kind: horizontalpodautoscaler
+        - managed: true
+          kind: route
+        - managed: true
+          kind: mirror
+        - managed: true
+          kind: monitoring
+        - managed: true
+          kind: tls
+        - managed: true
+          kind: quay
+        - managed: true
+          kind: clairpostgres
+  setup-ansible-playbook-from-configmap-volume: "#! /bin/bash\n###/ SET VARIABLES
+    \\###\n\ndeclare playbook_directory_full_path=$(echo $PWD/$(dirname \"$0\") |
+    sed -E 's/([.]|[.][.])\\/?//g ; s/(.*)(\\/$)/\\1/')\ndeclare playbook_name=$(basename
+    $PWD)\n# in the container the files will be in fact available as symbolic links\ndeclare
+    ansible_files_paths_needed_directories\ndeclare ansible_files_paths=\"\"\"$(find
+    $playbook_directory_full_path -regex \".\\/$playbook_name.*\")\"\"\"\ndeclare
+    -A ansible_files_destinations_manifest\n\n###\\ set variables /###\n\n###/ SCRIPT
+    \\###\n\n# compose dict for mapping files to their destinations\nfor ansible_file_path
+    in $ansible_files_paths; do\n    # parse ansible file's destination path\n    destination_path=$(echo
+    $ansible_file_path | sed -E 's/_/\\//g')\n    # add entry to manifest dict\n    ansible_files_destinations_manifest+=([$ansible_file_path]=$destination_path)\ndone\n\n#
+    get from manifest dict what directories are needed for restoring original structure\nansible_files_paths_needed_directories=$(\\
+    \n    for manifest_entry_value in ${ansible_files_destinations_manifest[@]}; do
+    echo $manifest_entry_value; done | \\\n    sed -E \"s/(.*\\/)(.*)/\\1/ ; s/[.]\\/$playbook_name\\///\"
+    | \\\n    sort | \\\n    uniq\n)\n\n# create directory structure\nfor $destination_directory
+    in ${ansible_files_paths_needed_directories[@]}; mkdir -p $destination_directory;
+    done\n\n# move files to their places\nfor manifest_entry_key in ${!ansible_files_destinations_manifest[@]};
+    do\n    mv $manifest_entry_key ${ansible_files_destinations_manifest[$manifest_entry_key]}\ndone\n\n###\\
+    script /###\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: quay-configuration-ansible-playbook

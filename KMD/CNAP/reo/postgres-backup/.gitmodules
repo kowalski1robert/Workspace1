@@ -1,0 +1,3 @@
+[submodule "postgres-operator-official-examples"]
+	path = postgres-operator-official-examples
+	url = https://github.com/reokmd/postgres-operator-examples.git

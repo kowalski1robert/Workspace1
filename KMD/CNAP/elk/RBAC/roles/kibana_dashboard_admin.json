@@ -1,0 +1,27 @@
+{
+  "metadata": {},
+  "elasticsearch": {
+    "cluster": [],
+    "indices": [],
+    "run_as": []
+  },
+  "kibana": [
+    {
+      "base": [],
+      "feature": {
+        "dashboard": [
+          "all"
+        ],
+        "canvas": [
+          "all"
+        ],
+        "visualize": [
+          "all"
+        ]
+      },
+      "spaces": [
+        "*"
+      ]
+    }
+  ]
+}

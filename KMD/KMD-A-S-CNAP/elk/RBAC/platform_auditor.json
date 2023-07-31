@@ -1,0 +1,47 @@
+{
+  "cluster": [
+    "read_ccr",
+    "read_pipeline",
+    "read_ilm",
+    "read_slm",
+    "monitor",
+    "monitor_data_frame_transforms",
+    "monitor_ml",
+    "monitor_rollup",
+    "monitor_snapshot",
+    "monitor_text_structure",
+    "monitor_transform",
+    "monitor_watcher"
+  ],
+  "indices": [
+    {
+      "names": [
+        "filebeat-*",
+        "logs-*",
+        "metricbeat-*",
+        "metrics-*"
+      ],
+      "privileges": [
+        "read",
+        "view_index_metadata"
+      ],
+      "allow_restricted_indices": false
+    }
+  ],
+  "applications": [
+    {
+      "application": "kibana-.kibana",
+      "privileges": [
+        "space_read"
+      ],
+      "resources": [
+        "space:default"
+      ]
+    }
+  ],
+  "run_as": [],
+  "metadata": {},
+  "transient_metadata": {
+    "enabled": true
+  }
+}

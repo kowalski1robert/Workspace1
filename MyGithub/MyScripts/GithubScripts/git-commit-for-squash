@@ -1,0 +1,9 @@
+#!/bin/bash
+SQUASH_MESSAGE=$(git log --pretty=format:"%s" -1)
+
+if [[ "$SQUASH_MESSAGE" =~ ^squash!( )* ]]
+then
+  git commit -m "$SQUASH_MESSAGE"
+else
+  git commit -m "squash! $SQUASH_MESSAGE"
+fi

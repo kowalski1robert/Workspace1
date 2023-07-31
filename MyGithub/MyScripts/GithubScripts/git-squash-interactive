@@ -1,0 +1,16 @@
+#!/bin/bash
+COMMIT_MESSAGES=$(git log --pretty=format:"%s")
+SQUASH_MESSAGE=$(git log --pretty=format:"%s" -1)
+
+declare -i COMMITS_TO_SQUASH && COMMITS_TO_SQUASH=0
+
+while IFS= read -r commit_message 
+do 
+  if [[ $commit_message != $SQUASH_MESSAGE ]]
+  then 
+    break
+  fi
+  COMMITS_TO_SQUASH=$COMMITS_TO_SQUASH+1
+done <<< $(git log --pretty=format:"%s")
+
+git rebase -i HEAD~$COMMITS_TO_SQUASH

@@ -1,0 +1,23 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: job-creator
+  namespace: {{ .Values.subscription.namespace }}
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "delete", "patch"]
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: installplan-manager
+  namespace: {{ .Values.subscription.namespace }}
+rules:
+  - apiGroups: ["operators.coreos.com"]
+    resources: ["installplans"]
+    verbs: ["list", "get", "patch"]
+  - apiGroups: [ "operators.coreos.com" ]
+    resources: [ "subscriptions" ]
+    verbs: [ "get" ]
+

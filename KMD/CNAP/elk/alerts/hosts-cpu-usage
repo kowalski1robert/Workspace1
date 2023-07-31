@@ -1,0 +1,53 @@
+{
+    "params": {
+        "nodeType": "host",
+        "criteria": [
+            {
+                "metric": "cpu",
+                "comparator": ">",
+                "threshold": [
+                    95
+                ],
+                "timeSize": 1,
+                "timeUnit": "m",
+                "customMetric": {
+                    "type": "custom",
+                    "id": "alert-custom-metric",
+                    "field": "",
+                    "aggregation": "avg"
+                },
+                "warningComparator": ">",
+                "warningThreshold": [
+                    90
+                ]
+            }
+        ],
+        "sourceId": "default",
+        "alertOnNoData": true
+    },
+    "consumer": "alerts",
+    "schedule": {
+        "interval": "1m"
+    },
+    "tags": [
+        "hosts",
+        "cpu-usage"
+    ],
+    "name": "Hosts CPU Usage",
+    "rule_type_id": "metrics.alert.inventory.threshold",
+    "notify_when": "onActionGroupChange",
+    "actions": [
+        {
+            "group": "metrics.inventory_threshold.fired",
+            "id": "cdd34190-91ac-11ed-a55e-b75dd79744a2",
+            "params": {
+                "documents": [
+                    {
+                        "alert_id": "{{alert.id}}",
+                        "full_internal_message": "{{context.internalFullMessage}}"
+                    }
+                ]
+            }
+        }
+    ]
+}

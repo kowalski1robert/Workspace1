@@ -1,0 +1,57 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  creationTimestamp: "2023-04-23T17:52:54Z"
+  finalizers:
+    - postgres-operator.crunchydata.com/finalizer
+  generation: 1
+  name: lion
+  namespace: postgres-operator
+  resourceVersion: "535645448"
+  uid: 4f074f27-6018-47e6-8f75-06f5e831bd30
+spec:
+  backups:
+    pgbackrest:
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
+      repos:
+        - name: repo1
+          schedules:
+            full: 10-20 11 * * *
+          volume:
+            volumeClaimSpec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-15.2-0
+  instances:
+    - dataVolumeClaimSpec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+      name: instance1
+      replicas: 1
+  port: 5432
+  postgresVersion: 15
+status:
+  conditions:
+    - lastTransitionTime: "2023-04-23T17:52:54Z"
+      message: Restoring cluster in-place
+      observedGeneration: 1
+      reason: ReadyForRestore
+      status: "True"
+      type: PGBackRestoreProgressing
+  instances:
+    - name: instance1
+  pgbackrest:
+    restore:
+      active: 1
+      failed: 4
+      finished: false
+      id: ~pgo-bootstrap-lion
+      startTime: "2023-04-23T17:52:54Z"
+  startupInstance: lion-instance1-b47d
+  startupInstanceSet: instance1

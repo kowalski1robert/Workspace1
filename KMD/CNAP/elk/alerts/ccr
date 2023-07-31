@@ -1,0 +1,29 @@
+{
+    "params": {
+        "duration": "1m"
+    },
+    "consumer": "alerts",
+    "schedule": {
+        "interval": "1m"
+    },
+    "tags": [
+        "stack-monitoring"
+    ],
+    "name": "CCR ",
+    "rule_type_id": "monitoring_ccr_read_exceptions",
+    "notify_when": "onActionGroupChange",
+    "actions": [
+        {
+            "group": "default",
+            "id": "cdd34190-91ac-11ed-a55e-b75dd79744a2",
+            "params": {
+                "documents": [
+                    {
+                        "alert_id": "{{alert.id}}",
+                        "full_internal_message": "{{context.internalFullMessage}}"
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+#!/bin/bash
+SQUASH_MESSAGE=$(git log --pretty=format:"%s" -1)
+
+# if [[ "$SQUASH_MESSAGE" =~ ^((squash)|(fixup))\!( )* ]]
+# then
+#   git commit -m "$SQUASH_MESSAGE"
+# else
+#   git commit -m "fixup! $SQUASH_MESSAGE"
+# fi
+PREFIX='fixup!'
+while getopts ":afsm:n:" opt; do
+  case $opt in
+    a)
+      git add .
+      ;;
+    f)
+      PREFIX='fixup!'
+      ;;
+    m)
+      SQUASH_MESSAGE=$OPTARG
+      ;;
+    n)
+      SQUASH_MESSAGE=$(git log --pretty=format:"%s" -$OPTARG | tail -1)
+      ;;
+    s)
+      PREFIX='squash!'
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+git commit -m "$PREFIX $(echo $SQUASH_MESSAGE | sed -E 's/^((squash)|(fixup))\!( )*//g')"

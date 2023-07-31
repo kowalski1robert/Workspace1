@@ -1,0 +1,8 @@
+cnap_environments:
+  - cnap-environment-dev
+  - cnap-environment-test
+  - cnap-environment-staging
+  - cnap-environment-prod
+  - cicd
+  - cnap-academy-cicd
+  - devsecops-dev

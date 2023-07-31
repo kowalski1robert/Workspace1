@@ -1,0 +1,10 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: ClusterInterceptor
+metadata:
+  name: acr-clusterInterceptor
+  namespace: mxb
+  labels:
+    app: acr-integration
+spec:
+  clientConfig:
+    url: "http://webhook-interceptor.mxb.svc"

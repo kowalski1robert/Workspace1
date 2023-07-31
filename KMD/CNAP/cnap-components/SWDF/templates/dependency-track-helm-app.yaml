@@ -1,0 +1,85 @@
+{{ if .Values.cnap.dependencyTrack.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dependency-track
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  destination:
+    namespace: dependency-track
+    server: https://kubernetes.default.svc
+  source:
+    chart: dependency-track
+    repoURL: "https://evryfs.github.io/helm-charts/"
+    targetRevision: 1.5.5
+    helm:
+      values: |
+        frontend:
+          image:
+            repository: dependencytrack/frontend
+            tag: 4.7.0
+            pullPolicy: IfNotPresent
+          replicaCount: 1
+          env:
+            - name: API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: dependency-track-frontend-config
+                  key: API_BASE_URL
+        apiserver:
+{{/*          podSecurityContext:*/}}
+{{/*            fsGroup: 1000830000*/}}
+{{/*          securityContext:*/}}
+{{/*            readOnlyRootFilesystem: true*/}}
+{{/*            runAsNonRoot: true*/}}
+{{/*            runAsUser: 1000830000*/}}
+{{/*            runAsGroup: 1000830000*/}}
+          image:
+            repository: dependencytrack/apiserver
+            tag: 4.7.0
+            pullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 1
+              memory: 4608Mi
+            limits:
+              cpu: 4
+              memory: 16Gi
+          env:
+            - name: ALPINE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: dependencytrack-pguser-dependencytrack
+                  key: jdbc-uri
+            - name: ALPINE_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: dependencytrack-pguser-dependencytrack
+                  key: port
+            - name: ALPINE_DATABASE_DRIVER
+              value: "org.postgresql.Driver"
+            - name: ALPINE_DATABASE_MODE
+              value: "external"
+            - name: ALPINE_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: dependencytrack-pguser-dependencytrack
+                  key: dbname
+            - name: ALPINE_DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: dependencytrack-pguser-dependencytrack
+                  key: user
+            - name: ALPINE_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dependencytrack-pguser-dependencytrack
+                  key: password
+        postgresql:
+          enabled: false
+  project: argocd-cnap-app-of-apps-project
+  syncPolicy:
+    automated: {}
+{{ end }}

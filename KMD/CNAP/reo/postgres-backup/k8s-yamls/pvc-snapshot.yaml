@@ -1,0 +1,17 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: VAR.PVC_NAME.VAR
+  annotations:
+    snapshot.alpha.kubernetes.io/snapshot: VAR.PV_SNAPSHOT_NAME.VAR
+spec:
+  storageClassName: snapshot-promoter
+  volumeName: VAR.PV_NAME.VAR
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # dataSource:
+  #   kind: PersistentVolumeClaim
+  #   name: hippo-repo1

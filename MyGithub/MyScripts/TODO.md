@@ -1,0 +1,1 @@
+- Script to sync ALL submodules in given parent module recursively / find out what's the native aproach (e.g. command)

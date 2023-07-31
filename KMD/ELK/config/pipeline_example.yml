@@ -1,0 +1,20 @@
+input {
+
+}
+
+filter {
+
+}
+
+output {
+    elasticsearch {
+        hosts => ["https://elasticsearch_host_ip:9200"]
+        index => "index-pattern"
+
+        user => "user"
+
+        password => "password"
+        cacert => "/path/to/ca/cert"
+        ssl => true
+
+}

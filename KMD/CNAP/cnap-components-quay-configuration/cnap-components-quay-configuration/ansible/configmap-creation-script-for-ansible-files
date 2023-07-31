@@ -1,0 +1,42 @@
+#! /bin/bash
+declare script_full_path=$(dirname "$0")
+declare templates_dir_full_path="$script_full_path/../config/templates"
+declare helm_dir_full_path="$script_full_path/../config/"
+declare subdirs_full_paths=$(find $script_full_path/* -type d)
+declare -A ansible_manifest=()
+
+for subdir_full_path in $subdirs_full_paths; do
+    subdir_subpath=$(echo $subdir_full_path | sed -e "s|\($script_full_path/\)\(.*\)|\2|")
+    found_yamls=($(find $subdir_full_path -maxdepth 1 -type f -name '*.yaml*' | grep -v .*\.debug))
+
+    if (( ${#found_yamls[@]} > 0 )); then
+            playbook_name=$(echo $subdir_subpath | cut -d/ -f1)
+        cm_name=$playbook_name
+        cm_name+='.ansible-playbook.'
+        cm_name+=$(echo $subdir_subpath | cut -d/ -f2- | sed -E 's/\//\./g')
+        ansible_manifest+=([$cm_name]=$subdir_subpath)
+        for yaml_to_parse in ${found_yamls[@]}; do
+            sed -E 's|(\{\{)(.*)(\}\})|\1`\{\{\2\}\}`\3|' $yaml_to_parse > $yaml_to_parse.tmp
+        done
+
+        kubectl_create_config_map_command="""kubectl create configmap $cm_name 
+            "$(for yaml_to_parse in ${found_yamls[@]}; do echo "--from-file=$(basename $yaml_to_parse)=$yaml_to_parse.tmp"; done)"
+            --dry-run=client 
+            -o=yaml"""
+        $kubectl_create_config_map_command > $templates_dir_full_path/$cm_name.yaml
+        yq -e -i '.metadata.namespace = "{{ .Values.namespace }}"' $templates_dir_full_path/$cm_name.yaml
+        rm $subdir_full_path/*.tmp
+    else
+        :
+    fi
+done
+echo """ansible_manifest:
+  volumesMountPath: /usr/share/ansible/openshift-ansible/playbooks/
+  volumes:
+$(for manifest_key in ${!ansible_manifest[@]}; do 
+    echo -e "    - name: $manifest_key"
+    echo -e "      mountName: $(echo $manifest_key | sed "s/$playbook_name\.ansible-playbook\.// ; s/-//g ; s/[.]/-/g")"
+    echo -e "      type: configMap"
+    echo -e "      mountSubPath: ${ansible_manifest[$manifest_key]}"
+done)""" > $helm_dir_full_path/ansible-manifest.values.yaml
+yq eval-all 'select(fileIndex==0).ansible_manifest = select(fileIndex==1).ansible_manifest | select(fileIndex==0)' $helm_dir_full_path/values.yaml "$helm_dir_full_path/ansible-manifest.values.yaml" -i

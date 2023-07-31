@@ -1,0 +1,8 @@
+---
+- name: 'Install CICD'
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: 'Install CICD Infra'
+      include_role:
+        name: "ocp4-install-cicd"

@@ -1,0 +1,29 @@
+#! /bin/bash
+read -s -p "Enter sudo password for installation process: " SUDO_PASSWORD
+
+MAIN_SCRIPT_PATH=$(dirname -- "$(readlink -f -- "$0")")
+# bash $MAIN_SCRIPT_PATH/setting-permissions/home.sh
+bash $MAIN_SCRIPT_PATH/install-components-script/clis.sh $SUDO_PASSWORD
+bash $MAIN_SCRIPT_PATH/install-components-script/zsh.sh $SUDO_PASSWORD
+
+
+
+
+
+# MAIN_SCRIPT_PATH=$(dirname -- "$(readlink -f -- "$0")")
+# ### find -L returns paths to all files, dirs, subdirs and fils in subdirs; grep filters everything which is not directly in this dir; sed cuts out './' at the beginning
+# SCRIPTS_SUB_PATHS=$(find -L | grep './.*/.*' | sed 's/\.\///g')
+
+# ### add main script path to every sub path
+# for script_sub_path in ${SCRIPTS_SUB_PATHS[@]}
+# do
+#   SCRIPTS_PATHS=(${SCRIPTS_PATHS[@]} $MAIN_SCRIPT_PATH/$script_sub_path)
+# done
+# a=2
+# b=a
+
+# # for script in ${SCRIPTS_PATHS[@]}
+# # do
+# #   bash $script
+# # done
+# echo $($b)

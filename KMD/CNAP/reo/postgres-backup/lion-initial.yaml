@@ -1,0 +1,55 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: lion
+spec:
+  dataSource:
+    postgresCluster:
+      repoName: repo1
+      clusterName: zebra
+  users:
+  - name: lion
+    databases:
+      - lion
+  - name: reo
+    databases:
+      - lion
+    options: superuser
+  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.6-2
+  postgresVersion: 14
+  instances:
+    - name: instance1
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 1Gi
+  backups:
+    pgbackrest:
+      restore:
+        enabled: true
+        repoName: repo1
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
+      repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              dataSource:
+                kind: PersistentVolumeClaim
+                name: zebra-repo1
+              accessModes:
+                - "ReadWriteOnce"
+              resources:
+                requests:
+                  storage: 1Gi
+  userInterface:
+    pgAdmin:
+      dataVolumeClaimSpec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgadmin4:ubi8-4.30-10
+      replicas: 1

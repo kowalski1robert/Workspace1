@@ -1,0 +1,9 @@
+# link in helpm menu at the right upper corner of the console
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: example
+spec:
+  href: "https://www.example.com"
+  location: HelpMenu
+  text: Link 1

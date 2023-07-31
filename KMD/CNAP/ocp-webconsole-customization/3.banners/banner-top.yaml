@@ -1,0 +1,12 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleNotification
+metadata:
+  name: example1
+spec:
+  text: Welcome to CNAP!
+  location: BannerTop # it can be BannerTop or BannerBottom
+  link:
+    href: "https://www.example.com"
+    text: Optional link
+  color: "#fff" # font collor
+  backgroundColor: "#0088ce"

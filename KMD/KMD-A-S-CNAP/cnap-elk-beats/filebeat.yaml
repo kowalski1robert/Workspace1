@@ -1,0 +1,102 @@
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  annotations:
+    association.k8s.elastic.co/es-conf: '{"authSecretName":"filebeat-beat-user","authSecretKey":"eck-filebeat-beat-user","isServiceAccount":false,"caCertProvided":true,"caSecretName":"filebeat-beat-es-ca","url":"https://elasticsearch-es-http.eck.svc:9200","version":"8.4.2"}'
+    association.k8s.elastic.co/es-conf-987391668: '{"authSecretName":"filebeat-eck-elasticsearch-beat-es-mon-user","authSecretKey":"eck-filebeat-eck-elasticsearch-beat-es-mon-user","isServiceAccount":false,"caCertProvided":true,"caSecretName":"filebeat-beat-monitoring-eck-elasticsearch-ca","url":"https://elasticsearch-es-http.eck.svc:9200","version":"8.4.2"}'
+    association.k8s.elastic.co/kb-conf: '{"authSecretName":"filebeat-beat-kb-user","authSecretKey":"eck-filebeat-beat-kb-user","isServiceAccount":false,"caCertProvided":true,"caSecretName":"filebeat-beat-kibana-ca","url":"https://kibana-kb-http.eck.svc:5601","version":"8.4.2"}'
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"beat.k8s.elastic.co/v1beta1","kind":"Beat","metadata":{"annotations":{"association.k8s.elastic.co/es-conf":"{\"authSecretName\":\"filebeat-beat-user\",\"authSecretKey\":\"eck-filebeat-beat-user\",\"isServiceAccount\":false,\"caCertProvided\":true,\"caSecretName\":\"filebeat-beat-es-ca\",\"url\":\"https://elasticsearch-es-http.eck.svc:9200\",\"version\":\"8.4.2\"}","association.k8s.elastic.co/es-conf-987391668":"{\"authSecretName\":\"filebeat-eck-elasticsearch-beat-es-mon-user\",\"authSecretKey\":\"eck-filebeat-eck-elasticsearch-beat-es-mon-user\",\"isServiceAccount\":false,\"caCertProvided\":true,\"caSecretName\":\"filebeat-beat-monitoring-eck-elasticsearch-ca\",\"url\":\"https://elasticsearch-es-http.eck.svc:9200\",\"version\":\"8.4.2\"}","association.k8s.elastic.co/kb-conf":"{\"authSecretName\":\"filebeat-beat-kb-user\",\"authSecretKey\":\"eck-filebeat-beat-kb-user\",\"isServiceAccount\":false,\"caCertProvided\":true,\"caSecretName\":\"filebeat-beat-kibana-ca\",\"url\":\"https://kibana-kb-http.eck.svc:5601\",\"version\":\"8.4.2\"}"},"creationTimestamp":"2023-03-27T12:38:10Z","generation":2,"name":"filebeat","namespace":"eck","resourceVersion":"89217477","uid":"63063c5b-d56b-42ba-bad5-8a5fe6c813ef"},"spec":{"configRef":{"secretName":"config-filebeat"},"daemonSet":{"podTemplate":{"metadata":{"creationTimestamp":null},"spec":{"automountServiceAccountToken":true,"containers":[{"name":"filebeat","resources":{"limits":{"cpu":"1","memory":"400Mi"},"requests":{"cpu":"80m","memory":"100Mi"}},"securityContext":{"privileged":true,"runAsUser":0},"volumeMounts":[{"mountPath":"/var/log/containers","name":"varlogcontainers"},{"mountPath":"/var/log/pods","name":"varlogpods"},{"mountPath":"/var/lib/docker/containers","name":"varlibdockercontainers"}]}],"dnsPolicy":"ClusterFirstWithHostNet","initContainers":[{"name":"elastic-internal-init-keystore","resources":{"limits":{"cpu":"100m","memory":"300Mi"},"requests":{"cpu":"100m","memory":"300Mi"}},"securityContext":{"privileged":true,"runAsUser":0}}],"serviceAccountName":"filebeat","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/infra","operator":"Equal","value":""},{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal","value":""}],"volumes":[{"hostPath":{"path":"/var/log/containers"},"name":"varlogcontainers"},{"hostPath":{"path":"/var/log/pods"},"name":"varlogpods"},{"hostPath":{"path":"/var/lib/docker/containers"},"name":"varlibdockercontainers"}]}},"updateStrategy":{}},"elasticsearchRef":{"name":"elasticsearch","namespace":"eck"},"kibanaRef":{"name":"kibana"},"monitoring":{"logs":{},"metrics":{"elasticsearchRefs":[{"name":"elasticsearch","namespace":"eck"}]}},"secureSettings":[{"secretName":"api-key-filebeat"}],"type":"filebeat","version":"8.4.2"},"status":{"availableNodes":10,"elasticsearchAssociationStatus":"Established","expectedNodes":10,"health":"green","kibanaAssociationStatus":"Established","monitoringAssociationStatus":{"eck/elasticsearch":"Established"},"observedGeneration":2,"version":"8.4.2"}}
+  creationTimestamp: "2023-03-27T12:38:10Z"
+  generation: 3
+  name: filebeat
+  namespace: eck
+  resourceVersion: "89729736"
+  uid: 63063c5b-d56b-42ba-bad5-8a5fe6c813ef
+spec:
+  configRef:
+    secretName: config-filebeat
+  daemonSet:
+    podTemplate:
+      metadata: {}
+      spec:
+        automountServiceAccountToken: true
+        containers:
+        - name: filebeat
+          resources:
+            limits:
+              cpu: "1"
+              memory: 400Mi
+            requests:
+              cpu: 80m
+              memory: 100Mi
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+          - mountPath: /var/log/containers
+            name: varlogcontainers
+          - mountPath: /var/log/pods
+            name: varlogpods
+          - mountPath: /var/lib/docker/containers
+            name: varlibdockercontainers
+        dnsPolicy: ClusterFirstWithHostNet
+        initContainers:
+        - name: elastic-internal-init-keystore
+          resources:
+            limits:
+              cpu: 100m
+              memory: 300Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+          securityContext:
+            privileged: true
+            runAsUser: 0
+        serviceAccountName: filebeat
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/infra
+          operator: Equal
+          value: ""
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Equal
+          value: ""
+        volumes:
+        - hostPath:
+            path: /var/log/containers
+          name: varlogcontainers
+        - hostPath:
+            path: /var/log/pods
+          name: varlogpods
+        - hostPath:
+            path: /var/lib/docker/containers
+          name: varlibdockercontainers
+    updateStrategy: {}
+  elasticsearchRef:
+    name: elasticsearch
+    namespace: eck
+  kibanaRef:
+    name: kibana
+  monitoring:
+    logs: {}
+    metrics:
+      elasticsearchRefs:
+      - name: elasticsearch
+        namespace: eck
+  secureSettings:
+  - secretName: api-key-filebeat
+  type: filebeat
+  version: 8.4.2
+status:
+  availableNodes: 21
+  elasticsearchAssociationStatus: Established
+  expectedNodes: 21
+  health: green
+  kibanaAssociationStatus: Established
+  monitoringAssociationStatus:
+    eck/elasticsearch: Established
+  observedGeneration: 3
+  version: 8.4.2

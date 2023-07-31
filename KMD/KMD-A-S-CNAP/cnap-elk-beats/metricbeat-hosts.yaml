@@ -1,0 +1,122 @@
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  annotations:
+    association.k8s.elastic.co/es-conf: '{"authSecretName":"metricbeat-hosts-beat-user","authSecretKey":"eck-metricbeat-hosts-beat-user","isServiceAccount":false,"caCertProvided":true,"caSecretName":"metricbeat-hosts-beat-es-ca","url":"https://elasticsearch-es-http.eck.svc:9200","version":"8.4.2"}'
+    association.k8s.elastic.co/es-conf-987391668: '{"authSecretName":"metricbeat-hosts-eck-elasticsearch-beat-es-mon-user","authSecretKey":"eck-metricbeat-hosts-eck-elasticsearch-beat-es-mon-user","isServiceAccount":false,"caCertProvided":true,"caSecretName":"metricbeat-hosts-beat-monitoring-eck-elasticsearch-ca","url":"https://elasticsearch-es-http.eck.svc:9200","version":"8.4.2"}'
+    association.k8s.elastic.co/kb-conf: '{"authSecretName":"metricbeat-hosts-beat-kb-user","authSecretKey":"eck-metricbeat-hosts-beat-kb-user","isServiceAccount":false,"caCertProvided":true,"caSecretName":"metricbeat-hosts-beat-kibana-ca","url":"https://kibana-kb-http.eck.svc:5601","version":"8.4.2"}'
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"beat.k8s.elastic.co/v1beta1","kind":"Beat","metadata":{"annotations":{"association.k8s.elastic.co/es-conf":"{\"authSecretName\":\"metricbeat-hosts-beat-user\",\"authSecretKey\":\"eck-metricbeat-hosts-beat-user\",\"isServiceAccount\":false,\"caCertProvided\":true,\"caSecretName\":\"metricbeat-hosts-beat-es-ca\",\"url\":\"https://elasticsearch-es-http.eck.svc:9200\",\"version\":\"8.4.2\"}","association.k8s.elastic.co/es-conf-987391668":"{\"authSecretName\":\"metricbeat-hosts-eck-elasticsearch-beat-es-mon-user\",\"authSecretKey\":\"eck-metricbeat-hosts-eck-elasticsearch-beat-es-mon-user\",\"isServiceAccount\":false,\"caCertProvided\":true,\"caSecretName\":\"metricbeat-hosts-beat-monitoring-eck-elasticsearch-ca\",\"url\":\"https://elasticsearch-es-http.eck.svc:9200\",\"version\":\"8.4.2\"}","association.k8s.elastic.co/kb-conf":"{\"authSecretName\":\"metricbeat-hosts-beat-kb-user\",\"authSecretKey\":\"eck-metricbeat-hosts-beat-kb-user\",\"isServiceAccount\":false,\"caCertProvided\":true,\"caSecretName\":\"metricbeat-hosts-beat-kibana-ca\",\"url\":\"https://kibana-kb-http.eck.svc:5601\",\"version\":\"8.4.2\"}"},"creationTimestamp":"2023-03-27T12:38:08Z","generation":2,"name":"metricbeat-hosts","namespace":"eck","resourceVersion":"89215703","uid":"f850323d-9e1b-47e6-929f-55e8158ac240"},"spec":{"configRef":{"secretName":"config-metricbeat"},"daemonSet":{"podTemplate":{"metadata":{"creationTimestamp":null},"spec":{"affinity":{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"kubernetes.io/os","operator":"In","values":["linux"]}]}]}}},"automountServiceAccountToken":true,"containers":[{"args":["-e","-c","/etc/beat.yml","-system.hostfs=/hostfs"],"env":[{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"spec.nodeName"}}}],"name":"metricbeat","resources":{"limits":{"cpu":"1","memory":"700Mi"},"requests":{"cpu":"100m","memory":"300Mi"}},"securityContext":{"privileged":true,"runAsUser":0},"volumeMounts":[{"mountPath":"/hostfs/sys/fs/cgroup","name":"cgroup"},{"mountPath":"/var/run/docker.sock","name":"dockersock"},{"mountPath":"/hostfs/proc","name":"proc"}]}],"dnsPolicy":"ClusterFirstWithHostNet","hostNetwork":true,"initContainers":[{"name":"elastic-internal-init-keystore","resources":{"limits":{"cpu":"100m","memory":"300Mi"},"requests":{"cpu":"100m","memory":"300Mi"}},"securityContext":{"privileged":true,"runAsUser":0}}],"serviceAccountName":"metricbeat","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/infra","operator":"Equal","value":""},{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal","value":""}],"volumes":[{"hostPath":{"path":"/sys/fs/cgroup"},"name":"cgroup"},{"hostPath":{"path":"/var/run/docker.sock"},"name":"dockersock"},{"hostPath":{"path":"/proc"},"name":"proc"}]}},"updateStrategy":{}},"elasticsearchRef":{"name":"elasticsearch","namespace":"eck"},"kibanaRef":{"name":"kibana"},"monitoring":{"logs":{},"metrics":{"elasticsearchRefs":[{"name":"elasticsearch","namespace":"eck"}]}},"secureSettings":[{"secretName":"api-key-metricbeat"}],"type":"metricbeat","version":"8.4.2"},"status":{"availableNodes":10,"elasticsearchAssociationStatus":"Established","expectedNodes":10,"health":"green","kibanaAssociationStatus":"Established","monitoringAssociationStatus":{"eck/elasticsearch":"Established"},"observedGeneration":2,"version":"8.4.2"}}
+  creationTimestamp: "2023-03-27T12:38:08Z"
+  generation: 3
+  name: metricbeat-hosts
+  namespace: eck
+  resourceVersion: "89729681"
+  uid: f850323d-9e1b-47e6-929f-55e8158ac240
+spec:
+  configRef:
+    secretName: config-metricbeat
+  daemonSet:
+    podTemplate:
+      metadata: {}
+      spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                  - linux
+        automountServiceAccountToken: true
+        containers:
+        - args:
+          - -e
+          - -c
+          - /etc/beat.yml
+          - -system.hostfs=/hostfs
+          env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          name: metricbeat
+          resources:
+            limits:
+              cpu: "1"
+              memory: 700Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+          - mountPath: /hostfs/sys/fs/cgroup
+            name: cgroup
+          - mountPath: /var/run/docker.sock
+            name: dockersock
+          - mountPath: /hostfs/proc
+            name: proc
+        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: true
+        initContainers:
+        - name: elastic-internal-init-keystore
+          resources:
+            limits:
+              cpu: 100m
+              memory: 300Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+          securityContext:
+            privileged: true
+            runAsUser: 0
+        serviceAccountName: metricbeat
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/infra
+          operator: Equal
+          value: ""
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Equal
+          value: ""
+        volumes:
+        - hostPath:
+            path: /sys/fs/cgroup
+          name: cgroup
+        - hostPath:
+            path: /var/run/docker.sock
+          name: dockersock
+        - hostPath:
+            path: /proc
+          name: proc
+    updateStrategy: {}
+  elasticsearchRef:
+    name: elasticsearch
+    namespace: eck
+  kibanaRef:
+    name: kibana
+  monitoring:
+    logs: {}
+    metrics:
+      elasticsearchRefs:
+      - name: elasticsearch
+        namespace: eck
+  secureSettings:
+  - secretName: api-key-metricbeat
+  type: metricbeat
+  version: 8.4.2
+status:
+  availableNodes: 21
+  elasticsearchAssociationStatus: Established
+  expectedNodes: 21
+  health: green
+  kibanaAssociationStatus: Established
+  monitoringAssociationStatus:
+    eck/elasticsearch: Established
+  observedGeneration: 3
+  version: 8.4.2

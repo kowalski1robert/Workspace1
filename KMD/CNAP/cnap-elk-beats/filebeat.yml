@@ -1,0 +1,139 @@
+##########################################################
+#                                                        #
+#                         BEAT                           #
+#                                                        #
+##########################################################
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  name: filebeat
+  namespace: eck
+spec:
+  monitoring:
+    metrics:
+      elasticsearchRefs:
+      - name: elasticsearch
+        namespace: eck
+  elasticsearchRef:
+    name: elasticsearch
+    namespace: eck
+  kibanaRef:
+    name: kibana  
+  secureSettings:
+  - secretName: api-key-filebeat
+  configRef:
+    secretName: config-filebeat
+  type: filebeat
+  version: 8.4.2
+
+    
+
+  daemonSet:
+    podTemplate:
+      spec:
+        serviceAccountName: filebeat
+        automountServiceAccountToken: true
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: false
+
+                # Elastic keystore init container
+        initContainers:
+          - name: elastic-internal-init-keystore
+            resources: # override the default resources set by the operator
+              limits:
+                cpu: 100m
+                memory: 300Mi
+              requests:
+                cpu: 100m
+                memory: 300Mi
+            securityContext:
+              privileged: true
+              runAsUser: 0
+        
+        containers:
+        - name: filebeat
+          resources:
+              limits:
+                memory: 400Mi
+                cpu: 1000m
+              requests:
+                cpu: 80m
+                memory: 100Mi
+          securityContext:
+            runAsUser: 0
+            privileged: true
+          volumeMounts:
+          - name: varlogcontainers
+            mountPath: /var/log/containers
+          - name: varlogpods
+            mountPath: /var/log/pods
+          - name: varlibdockercontainers
+            mountPath: /var/lib/docker/containers        
+#add env spec when upgrading from 7.17            
+          # env:
+          #   - name: NODE_NAME
+          #     valueFrom:
+          #       fieldRef:
+          #         fieldPath: spec.nodeName
+        volumes:
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers     
+---
+##########################################################
+#                                                        #
+#                     CLUSTER ROLE                       #
+#                                                        #
+##########################################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: filebeat
+  namespace: eck
+rules:
+- apiGroups: [""]
+  resources:
+  - namespaces
+  - pods
+  - nodes
+  - events
+  verbs:
+  - get
+  - watch
+  - list
+---
+##########################################################
+#                                                        #
+#                    SERVICE ACCOUNT                     #
+#                                                        #
+##########################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: filebeat
+  namespace: eck 
+---
+##########################################################
+#                                                        #
+#                 CLUSTER ROLE BINDING                   #
+#                                                        #
+##########################################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: filebeat
+subjects:
+- kind: ServiceAccount
+  name: filebeat
+  namespace: eck
+roleRef:
+  kind: ClusterRole
+  name: filebeat
+  apiGroup: rbac.authorization.k8s.io

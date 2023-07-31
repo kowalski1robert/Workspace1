@@ -1,0 +1,43 @@
+{
+  "cluster": [],
+  "indices": [
+    {
+      "names": [
+        "filebeat-*",
+        "logs-*",
+        "metricbeat-*",
+        "metrics-*"
+      ],
+      "privileges": [
+        "read",
+        "view_index_metadata"
+      ],
+      "allow_restricted_indices": false
+    }
+  ],
+  "applications": [
+    {
+      "application": "kibana-.kibana",
+      "privileges": [
+        "feature_discover.all",
+        "feature_dashboard.all",
+        "feature_canvas.read",
+        "feature_maps.read",
+        "feature_visualize.read",
+        "feature_logs.read",
+        "feature_infrastructure.read",
+        "feature_apm.read",
+        "feature_uptime.read",
+        "feature_observabilityCases.read"
+      ],
+      "resources": [
+        "space:cnap"
+      ]
+    }
+  ],
+  "run_as": [],
+  "metadata": {},
+  "transient_metadata": {
+    "enabled": true
+  }
+}

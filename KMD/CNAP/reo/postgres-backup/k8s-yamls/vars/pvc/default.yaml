@@ -1,0 +1,4 @@
+VAR:
+  PVC_NAME: hippo-repo1-new-instance
+  PV_NAME: hippo-repo1-new-instance
+  ZONE: 3

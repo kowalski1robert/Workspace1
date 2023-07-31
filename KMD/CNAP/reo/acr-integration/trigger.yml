@@ -1,0 +1,14 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: Trigger
+metadata:
+  name: acr-trigger
+  namespace: mxb
+  labels:
+    app: acr-integration
+spec:
+  # interceptors:
+  bindings:
+    - ref: acr-trigger-binding
+      kind: TriggerBinding
+  template:
+    ref: acr-trigger-template

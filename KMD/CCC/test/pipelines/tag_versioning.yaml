@@ -1,0 +1,23 @@
+trigger:
+  - main
+  
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: PythonScript@0
+  displayName: Compute new tag value
+  inputs:
+    scriptSource: filePath
+    scriptPath: (Agent.BuildDirectory)/s/pipelines/pipeline_scripts/versioning.py
+
+- task: Bash@3
+  displayName: Create tag
+  inputs:
+    script: |
+      git config --global user.name "BuildService"
+      git config --global user.email "buildservice@pipeline.com"
+      git tag -a $(new_tag) -m "Pipeline tag"
+      git push --tags
+
+  

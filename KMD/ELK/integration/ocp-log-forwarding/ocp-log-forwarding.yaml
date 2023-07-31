@@ -1,0 +1,30 @@
+apiVersion: "logging.openshift.io/v1"
+kind: ClusterLogForwarder
+metadata:
+  name: instance 
+  namespace: openshift-logging 
+spec:
+  outputs:
+   - name: elasticsearch-secure
+     type: "elasticsearch"
+     url: https://10.20.0.5:9200
+     secret:
+        name: elastic-secret
+  inputs: 
+   - name: amq-logs-input
+     application:
+        namespaces:
+        - amq
+  pipelines:
+   - name: amq-logs-pipel
+     inputRefs: 
+     - amq-logs-input
+     outputRefs:
+     - elasticsearch-secure 
+#     - default 
+     parse: json 
+     labels:
+       app: "amq"
+       logs: "audit-app"
+       ocp-name: "mgmt"
+       

@@ -1,0 +1,28 @@
+{{ if .Values.cnap.operatorQuayConfig.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quay-config
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  destination:
+    namespace: openshift-operators
+    server: https://kubernetes.default.svc
+  source:
+    path: config
+    repoURL: https://github.com/KMD-A-S-CNAP/cnap-components-quay
+    targetRevision: HEAD
+  project: argocd-cnap-app-of-apps-project
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/managed-by: openshift-gitops
+      annotations: #
+    automated:
+      prune: false
+      selfHeal: true
+  syncOptions:
+    - CreateNamespace=true
+{{ end }}

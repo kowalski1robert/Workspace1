@@ -1,0 +1,8 @@
+subscription:
+  name: quay-operator
+  namespace: openshift-operators
+  channel: stable-3.7
+  source: redhat-operators
+  startingCSV: quay-operator.v3.7.11
+quay:
+  project_name: quay-cnap

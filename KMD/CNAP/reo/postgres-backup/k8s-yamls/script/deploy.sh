@@ -1,0 +1,274 @@
+#!/bin/bash
+###/ Functions \###
+split () {
+  ### 3 arguments needed - $1 = string; $2 = delimiter string; $3 = name of the predeclared variable ###
+  ### function returns array of sliced strings ###
+  if [ -z $3 ]; then
+    echo -e '!!!!!ERROR!!!!!\nERROR: 3 string needed:\n $1 = string to be sliced;\n $2 = delimiter string;\n $3 = name of the predeclared variable which will hold result of this function\n!!!!!ERROR!!!!!'
+    exit 1;
+  fi
+
+  local -n array=$3
+  array=()
+
+  for dir in $(echo $1 | tr $2 " "); do
+    array+=($dir)
+  done
+  
+  return 0
+}
+
+join () {
+  ### 2 arguments needed - $1 = array name $2 = name of the predeclared variable which will hold result of this function ###
+  ### 1 argument optional - $3 = delimiter string (it will be added beetween) ###
+  if [ -z $2 ]; then
+    echo -e '!!!!!ERROR!!!!!\nERROR: 2 string needed:\n $1 = array NAME to be joined;\n $2 = name of the predeclared variable which will hold result of this function\n(OPTIONAL: $3 = delimiter;\n!!!!!ERROR!!!!!'
+    exit 1;
+  fi
+
+  local -n array=$1
+  declare -n join_result=$2
+  join_result=""
+  delimiter=$3
+
+  for str in ${array[@]}; do
+    join_result+="$str$delimiter"
+  done
+
+  join_result=${join_result::-1}
+}
+
+path_prettifier () {
+  ### function to cut out any "../" and "./" and transform path accordingly ###
+  ### 3 args needed: $1 = path prefix (e.g. $PWD); $2 = relational path; $3 name for var which will hold result ###
+  if [ -z $3 ]; then
+  echo -e '!!!!!ERROR!!!!!\nERROR: 3 string needed:\n $1 = path prefix (e.g. $PWD);\n $2 = relational path;\n $3 = name of the predeclared variable which will hold result of this function\n!!!!!ERROR!!!!!'
+  exit 1;
+  fi
+
+  local path_prefix=$1
+  local path_suffix=$2
+  declare -n path_prettifier_result=$3
+
+  local split_prefix
+  split $path_prefix / split_prefix
+  local split_suffix
+  split $path_suffix / split_suffix
+  # echo "split_suffix = ${split_suffix[@]}" #DEBUG
+
+  # echo "filtered_suffix = ${filtered_suffix[@]}" #DEBUG
+  local filtered_prefix=(${split_prefix[@]})
+  local filtered_sufix=()
+  # echo "filtered_suffix = ${filtered_suffix[@]}" #DEBUG
+  
+  local -i i=0
+
+  for dir in ${split_suffix[@]}; do
+    # echo ${split_suffix[@]} #DEBUG
+    if [[ $dir = "." ]]; then
+      :
+    elif [[ $dir = ".." ]]; then
+      unset 'filtered_prefix[${#filtered_prefix[@]}-1]'
+    else
+      break
+    fi
+
+    i+=1
+
+  done
+
+  # echo "#split_suffix = ${#split_suffix[@]}" #DEBUG
+  while (( $i < ${#split_suffix[@]} )); do
+    # echo "filtered_suffix = ${filtered_suffix[@]}" #DEBUG
+    local -n dir=split_suffix[$i]
+
+    if [[ $dir = "." ]]; then
+      :
+    elif [[ $dir = ".." ]]; then
+      unset 'filtered_suffix[${#filtered_suffix[@]}-1]'
+    else  
+      filtered_suffix+=($dir)
+    fi
+    # echo "filtered_suffix = ${filtered_suffix[@]}" #DEBUG
+    
+    i+=1
+  done
+
+  joined_arrays=(${filtered_prefix[@]} ${filtered_suffix[@]})
+
+  join joined_arrays  path_prettifier_result /
+  path_prettifier_result="/$path_prettifier_result"
+  
+}
+
+setup () {
+  local -A paths
+  local -a incorrect_paths
+
+  echo "Path to directory with kubernetes yaml/yamls (full or relational to script location): "
+  read -p "PATH_TO_YAMLS: " PATH_TO_YAMLS
+  echo "Path to directory with vars yaml/yamls (full or relational to script location):"
+  read -p "PATH_TO_VARS: " PATH_TO_VARS
+  
+  paths=( ["PATH_TO_YAMLS"]=$PATH_TO_YAMLS ["PATH_TO_VARS"]=$PATH_TO_VARS )
+
+  for path_id in "${!paths[@]}"; do
+    local -n path=paths[$path_id]
+
+    if [[ $path = /* ]]; then
+      slash=""
+    else 
+      slash="/"
+    fi
+    # echo "$PWD/$(dirname "$0")$slash$path" #DEBUG
+    filtered_suffix=()
+    # echo "filtered_suffix = ${filtered_suffix[@]}" #DEBUG
+    if [[ "$slash$path" = "/home/*" ]] && [[ -d "$slash$path" ]]; then
+      path="$slash$path"
+    elif [[ -d "$PWD/$(dirname "$0")$slash$path" ]]; then
+      local path_prefix=$PWD
+      # echo $PWD #DEBUG
+      # echo $(dirname "$0")$slash$path #DEBUG
+
+      path_prettifier $path_prefix $(dirname "$0")$slash$path full_path
+      path=$full_path
+      # echo -e "$full_path\n" #DEBUG
+    else 
+      incorrect_paths+=($path_id)
+    fi
+    # echo $path
+
+  done
+
+  # echo "${paths[@]} to jest test"
+  # echo ${incorrect_paths[@]}
+
+  if (( ${#incorrect_paths} )); then
+    echo -e "\n!!!!!ERROR!!!!!\nERROR: at least one of the given paths is incorrect:"
+    for path_id in ${incorrect_paths[@]}; do
+      local initial_path=$(declare -p $path_id | sed 's|\(.*"\)\(.*\).*\(".*\)|\2|')
+      echo -e "  $path_id with given:\n    $initial_path"
+    done
+    echo -e "Check values and provide correct ones\n!!!!!ERROR!!!!!"
+    exit 1
+  fi
+
+  echo """#!/bin/bash
+PATH_TO_YAMLS=${paths[PATH_TO_YAMLS]}
+PATH_TO_VARS=${paths[PATH_TO_VARS]}
+""" > "$(dirname "$0")/deploy-vars.sh"
+
+  return 0
+}
+###\ Functions /###
+
+###/ Setting variables \###
+delete_tmp=true
+while getopts ":cdf:rstv:" opt; do
+  case $opt in
+    c)
+      create=true
+      ;;
+    d)
+      delete=true
+      ;;
+    f)
+      yaml_filename="$OPTARG"
+      ;;
+    r)
+      replace=true
+      ;;
+    s)
+      setup
+      ;;
+    t)
+      # leave tmp file
+      delete_tmp=false
+      ;;
+    v)
+      vars_filename="$OPTARG"
+      ;;
+    :)
+      create=true
+      ;;
+  esac
+done
+  
+source $(dirname "$0")/deploy-vars.sh
+
+if [ ! -v yaml_filename ]; then
+  echo "ERROR: -f flag is required"
+  exit 1
+fi
+yaml_file=$PATH_TO_YAMLS/$yaml_filename
+
+if [ ! -v vars_filename ]; then
+  vars_file_to_choose_from=("$PATH_TO_VARS/$(echo $yaml_filename | sed -E 's/\.ya?ml$//')"/*)
+  if [ ${#vars_file_to_choose_from[@]} = 0 ]; then
+    echo "ERROR: no vars file available under given path"
+    exit 1
+  elif [ ${#vars_file_to_choose_from[@]} = 1 ]; then
+    vars_file=${vars_file_to_choose_from[0]}
+    echo "Chosen vars file: $(basename $vars_file)"
+  else
+    select choice in "${vars_file_to_choose_from[@]}"
+    do
+      if [[ -n "$choice" ]]; then
+        echo "Chosen $(basename $choice)"
+          vars_file=$choice
+        break
+      fi
+    done
+  fi
+else
+  vars_file=$PATH_TO_VARS/$(echo $yaml_filename | sed -E 's/\.ya?ml$//')/$vars_filename
+fi
+
+tmp_file=$(dirname "$0")/tmp_file.yaml
+###\ Setting variables /###
+
+###/ SCRIPT \###
+# copy k8s yaml to tmp yaml file
+cp $yaml_file $tmp_file
+
+# determine variables used in yaml file
+vars=$(cat $tmp_file | grep -o 'VAR\.[A-Z_]*\.VAR' | uniq | sed 's/\.VAR//')
+
+# check if/which variables are missing in vars file
+for var in $vars; do
+  value=$(yq ".$var" $vars_file)
+  if [ "$value" = null ]; then
+    missing_vars+="$var; "
+  fi
+done
+
+# if any var is missing in var file exit with error
+if [ -v missing_vars ]; then
+  echo "ERROR: missing variables in var file: $missing_vars"
+  exit 1
+fi
+
+# overwrite every string with var name by var value
+for var in $vars; do
+  value=$(yq ".$var" $vars_file)
+  sed -i "s/$var\.VAR/$value/" $tmp_file 
+done
+
+# oc delete/create/replace - depends which flags where used
+if [[ $delete = true ]]; then
+  oc delete -f $tmp_file
+fi
+
+if [[ $create = true ]]; then
+  oc create -f $tmp_file
+fi
+
+if [[ $replace = true ]]; then
+  oc replace -f $tmp_file
+fi
+
+# clean up tmp yaml file if -t flag is not passed
+if [ $delete_tmp = true ]; then
+  rm $tmp_file
+fi
+###\ SCRIPT /###

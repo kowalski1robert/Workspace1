@@ -1,0 +1,40 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: eck
+  labels:
+    app: eck
+spec:
+  version: 8.4.2
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+  http:
+    tls:
+      certificate:
+        # use the previously created Secret to on the Kibana endpoint
+        secretName: kibana-openshift-tls
+    service:
+      metadata:
+        annotations:
+          # request ECK to create the Kibana service with the following annotation
+          service.beta.openshift.io/serving-cert-secret-name: "kibana-openshift-tls"
+#  monitoring:
+#    logs: {}
+#    metrics: {}
+  podTemplate:
+    metadata:
+      labels:
+        app: eck
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            limits:
+              cpu: '1'
+              memory: 2.5Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+

@@ -1,0 +1,13 @@
+cnap:
+  nexus:
+    enabled: true
+  dependencyTrack:
+    enabled: true
+  dependencyTrackConfig:
+    enabled: true
+  operatorNoobaaConfig:
+    enabled: true
+  operatorQuayConfig:
+    enabled: true
+  operatorQuayConfiguration:
+    enabled: true

@@ -1,0 +1,141 @@
+##########################################################
+#                                                        #
+#                         SECRET                         #
+#                                                        #
+##########################################################
+apiVersion: v1
+kind: Secret
+metadata:
+  name: config-metricbeat
+stringData:
+  beat.yml: |-
+    setup:
+      dashboards.enabled: true
+      # kibana:
+      #   host: "https://kibana-kb-http.eck.svc:5601"
+      #   ssl.certificate_authorities:
+      #     - /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+      #   ssl.verification_mode: none
+    metricbeat:
+     autodiscover:
+       providers:
+         - type: kubernetes
+           hints.enabled: true
+           scope: cluster
+           node: ${NODE_NAME}       
+           templates:
+             - condition:
+                 and:
+                   - contains:
+                       kubernetes.labels.app: kube-controller-manager
+                   - equals:  
+                       kubernetes.namespace: openshift-kube-controller-manager
+               config:
+                 - module: kubernetes
+                   enabled: true
+                   metricsets:
+                     - controllermanager
+                   hosts: [ "https://${data.host}:10257" ]
+                   bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                   ssl.verification_mode: none
+                   period: 30s
+
+             - condition:
+                 and:
+                    - contains:
+                       kubernetes.labels.app: openshift-kube-scheduler
+                    - equals: 
+                       kubernetes.namespace: openshift-kube-scheduler
+               config:
+                  - module: kubernetes
+                    enabled: true
+                    metricsets:
+                      - scheduler
+                    hosts: [ "https://${data.host}:10259" ]
+                    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                    ssl.verification_mode: none
+                    period: 10s
+
+         - type: kubernetes
+           scope: cluster
+           node: ${NODE_NAME}
+           unique: true
+           templates:
+             - config:
+                 - module: kubernetes
+                   hosts: ["https://kube-state-metrics.openshift-monitoring.svc:8443"]
+                   bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                   ssl.certificate_authorities:
+                     - /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+                   period: 15s
+                   timeout: 45s
+                   add_metadata: true
+                   metricsets:
+                     - state_node
+                     - state_daemonset
+                     - state_deployment
+                     - state_replicaset
+                     - state_statefulset
+                     - state_pod
+                     - state_container
+                     - state_cronjob
+                     - state_job
+                     - state_resourcequota
+                     - state_service #doesn't work
+                     - state_persistentvolume
+                     - state_persistentvolumeclaim
+                     - state_storageclass                     
+                    #  - event
+                 - module: kubernetes
+                   metricsets: event
+                   bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                   ssl.verification_mode: none
+                   period: 10s
+                 - module: kubernetes
+                   metricsets:
+                     - apiserver
+                   hosts: ["https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"]
+                   bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                   ssl.verification_mode: none
+                   period: 30s
+     modules:
+     - module: system
+       period: 10s
+       metricsets: [ "cpu" , "load", "memory", "network", "process", "process_summary", "uptime"]
+       process:
+         include_top_n:
+           by_cpu: 5
+           by_memory: 5
+       processes:
+         - .*       
+     - module: system
+       period: 1m
+       metricsets: [ "filesystem" , "fsstat" ]
+       processors:
+       - drop_event:
+           when:
+             regexp:
+               system:
+                 filesystem:
+                   mount_point: ^/(sys|cgroup|proc|dev|etc|host|lib)($|/)
+     - module: kubernetes
+       period: 10s
+       host: ${NODE_NAME}
+       hosts: [ "https://${NODE_NAME}:10250" ]
+       bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+       ssl.verification_mode: none
+       metricsets: [ "node" , "system" , "pod", "container", "volume" ]
+
+    processors:
+      - add_cloud_metadata: {}
+      - add_host_metadata: {}
+      - add_fields:
+          target: orchestrator.cluster
+          fields:
+            name: dev
+            url: https://console-openshift-console.apps.dev.kmdstratus.com
+
+    # output.elasticsearch:
+    #     api_key: ${ID}:${API_KEY}
+    #     hosts: ["https://elasticsearch-es-http.eck.svc:9200"]
+    #     ssl.verification_mode: none

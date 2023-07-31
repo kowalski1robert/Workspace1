@@ -1,0 +1,9 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleNotification
+metadata:
+  name: env-banner
+spec:
+  text: You are logged into CNAP demo cluster
+  location: BannerTop
+  color: "#fff"
+  backgroundColor: "#43B02A"

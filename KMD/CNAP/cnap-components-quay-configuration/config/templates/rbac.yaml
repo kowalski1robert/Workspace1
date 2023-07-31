@@ -1,0 +1,24 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ansible-runner-hostpath-enable
+rules:
+  - apiGroups: ["security.openshift.io"]
+    resources: ["securitycontextconstraints"]
+    resourceNames: ["hostpath"]
+    verbs: 
+      - use
+      - get
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ansible-runner-hostpath-enable
+subjects:
+  - kind: ServiceAccount
+    name: ansible-runner
+    namespace: {{ .Values.namespace }}
+roleRef:
+  kind: Role
+  name: ansible-runner-hostpath-enable
+  apiGroup: rbac.authorization.k8s.io

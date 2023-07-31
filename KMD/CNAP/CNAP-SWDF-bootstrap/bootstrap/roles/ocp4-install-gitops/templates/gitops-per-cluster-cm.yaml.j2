@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: per-cluster-configmap
+  namespace: cicd
+data:
+  QUAY_URL: cnap-registry-quay-quay-cnap.apps.skat.kmdstratus.com
+  OPENSHIFT_WEBCONSOLE_URL: https://console-openshift-console.apps.skat.kmdstratus.com
+  DEV_ENVIRONMENT_REPO_URL: https://github.com/KMD-A-S-CNAP/cnap-environment-dev
+  MAIN_BRANCH_NAME: main
+  PIPELINE_NAMESPACE: cicd
+  DEV_NAMESPACE: devsecops-dev
+  DEPENDENCY_TRACK_URL: http://dependency-track-apiserver.cicd.svc.cluster.local

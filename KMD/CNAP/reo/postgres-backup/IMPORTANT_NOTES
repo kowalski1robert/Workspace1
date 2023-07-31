@@ -1,0 +1,9 @@
+Default user and database created by operator has the same name as cluster^1 (e.g. A) and it has no priviliged permissions beside access for default db. It means that when you are replicating cluster and you choose to give it another name (e.g. B), default user from in new db won't have access to replicated db (new default user B will have access to default db B, but won't also have access to replicated table A). BUT!!! users are also replicated so you can use proper user
+
+
+
+
+
+
+
+^1 you can provide your own user configuration under 'PostgresCluster.spec.users' - see: https://access.crunchydata.com/documentation/postgres-operator/v5/references/crd/#postgresclusterspecusersindex

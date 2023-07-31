@@ -1,0 +1,58 @@
+#!/bin/bash
+read -p "Right now the script needs to be run from the main repo with submodules. Do you run it from that directory? (Y/n) " condition
+if [[ $condition == "Y" ]]; then
+  :
+elif [[ $condition == "n" ]]; then
+  exit 1
+else
+  echo "No acceptable response has been dedected"
+  exit 1
+fi
+
+read -p "Do you want to push submodule changes to their origin repos? (Y/n) " submodules_push_approve
+if [[ $condition =~ "Y|n" ]]; then
+  echo "No acceptable response has been dedected - submodules won't push changes to their origin repos"
+fi
+
+submodules_list=($(ls -d */ | tr "/ " " "))
+
+declare -i updated_submodules=0
+
+for submodule in ${submodules_list[@]}; do
+  cd $submodule
+
+  if [[ $(git status) == *"nothing to commit, working tree clean" ]]; then
+    cd ../
+    continue
+  fi
+
+  echo $PWD
+
+  read -p "Pass commit message for $submodule submodule: " commit_message
+  git add .
+  git commit -am "$commit_message"
+
+  if [[ $submodules_push_approve == "Y" ]]; then git push; fi
+
+  updated_submodules+=1
+
+  cd ../
+done
+
+echo $updated_submodules
+
+cd ..
+
+if (( $updated_submodules > 0 )); then
+  read -p "Do you want to push parent module? (Y/n) " main_module_push_approve
+  if [[ $main_module_push_approve == "Y" ]]; then
+    read -p "Pass commit message for parent module: " commit_message
+    git add .
+    git commit -am "$commit_message"
+    git push
+  elif [[ $main_module_push_approve == "n" ]]; then
+    :
+  else
+    echo "No acceptable response has been dedected - parent modules won't push changes"
+  fi
+fi

@@ -1,0 +1,10 @@
+apiVersion: config.openshift.io/v1
+kind: Console
+#...
+spec:
+  customization:
+    customLogoFile:
+      key: custom-logo.png
+      name: custom-logo-black
+    customProductName: <application-name>
+#...

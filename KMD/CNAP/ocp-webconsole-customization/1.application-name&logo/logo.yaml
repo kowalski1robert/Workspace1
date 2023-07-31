@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-logo
+  namespace: openshift-config
+binaryData:
+  custom-logo.png: <one-line-encoded-logo>

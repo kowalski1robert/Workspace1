@@ -1,0 +1,27 @@
+{{ if .Values.cnap.operatorNoobaaConfig.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: noobaa-config
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  destination:
+    namespace: openshift-storage
+    server: https://kubernetes.default.svc
+  source:
+    path: config
+    repoURL: https://github.com/KMD-A-S-CNAP/cnap-components-openshift-operators-noobaa
+    targetRevision: HEAD
+  project: argocd-cnap-app-of-apps-project
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/managed-by: openshift-gitops
+    automated:
+      prune: false
+      selfHeal: true
+  syncOptions:
+    - CreateNamespace=true
+{{ end }}

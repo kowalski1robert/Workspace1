@@ -1,0 +1,5 @@
+VAR:
+  PVC_NAME: hippo-repo1-cloned
+  PV_NAME: hippo-repo1-cloned
+  STORAGE_CLASS_NAME: snapshot-promoter
+  ZONE: 3

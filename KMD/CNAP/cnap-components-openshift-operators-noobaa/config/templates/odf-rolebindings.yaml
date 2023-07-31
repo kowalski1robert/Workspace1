@@ -1,0 +1,13 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: installplan-manager-role-binding
+  namespace: {{ .Values.subscription.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: {{ .Values.subscription.namespace }}
+roleRef:
+  kind: Role
+  name: installplan-manager
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,27 @@
+{
+    "params": {},
+    "consumer": "alerts",
+    "schedule": {
+        "interval": "1m"
+    },
+    "tags": [
+        "stack-monitoring"
+    ],
+    "name": "Elasticsearch Version Mismatch",
+    "rule_type_id": "monitoring_alert_elasticsearch_version_mismatch",
+    "notify_when": "onActionGroupChange",
+    "actions": [
+        {
+            "group": "default",
+            "id": "cdd34190-91ac-11ed-a55e-b75dd79744a2",
+            "params": {
+                "documents": [
+                    {
+                        "alert_id": "{{alert.id}}",
+                        "full_internal_message": "{{context.internalFullMessage}}"
+                    }
+                ]
+            }
+        }
+    ]
+}

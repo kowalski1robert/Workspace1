@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: hippo-to-clone
+  name: VAR.POD_NAME.VAR
+  namespace: postgres-operator
+spec:
+  volumes:
+    - name: VAR.OLD_PVC_NAME.VAR
+      persistentVolumeClaim:
+        claimName: VAR.OLD_PVC_NAME.VAR
+    - name: VAR.NEW_PVC_NAME.VAR
+      persistentVolumeClaim:
+        claimName: VAR.NEW_PVC_NAME.VAR
+  containers:
+    - image: nginx
+      imagePullPolicy: Always
+      name: copier
+      resources:
+        limits:
+          cpu: 150m
+          memory: 512Mi
+        requests:
+          cpu: 150m
+          memory: 512Mi
+      volumeMounts:
+        - mountPath: /mnt/VAR.OLD_PVC_NAME.VAR
+          name: VAR.OLD_PVC_NAME.VAR
+        - mountPath: /mnt/VAR.NEW_PVC_NAME.VAR
+          name: VAR.NEW_PVC_NAME.VAR

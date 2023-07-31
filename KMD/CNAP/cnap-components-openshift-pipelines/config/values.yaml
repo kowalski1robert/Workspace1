@@ -1,0 +1,6 @@
+subscription:
+  name: openshift-pipelines-operator-rh
+  namespace: openshift-operators
+  channel: pipelines-1.10
+  source: redhat-operators
+  startingCSV: openshift-pipelines-operator-rh.v1.10.4

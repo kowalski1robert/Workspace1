@@ -1,0 +1,45 @@
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  annotations:
+    include.release.openshift.io/ibm-cloud-managed: "true"
+    include.release.openshift.io/self-managed-high-availability: "true"
+    include.release.openshift.io/single-node-developer: "true"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"config.openshift.io/v1","kind":"OAuth","metadata":{"annotations":{"include.release.openshift.io/ibm-cloud-managed":"true","include.release.openshift.io/self-managed-high-availability":"true","include.release.openshift.io/single-node-developer":"true","release.openshift.io/create-only":"true"},"creationTimestamp":"2022-10-03T19:04:51Z","generation":18,"name":"cluster","ownerReferences":[{"apiVersion":"config.openshift.io/v1","kind":"ClusterVersion","name":"version","uid":"34b5b015-9591-4adf-a375-598d0f714c43"}],"resourceVersion":"484793760","uid":"d0acafe8-9777-45be-ae9a-002de415148a"},"spec":{"identityProviders":[{"mappingMethod":"claim","name":"azureAD","openID":{"claims":{"email":["email"],"name":["name"],"preferredUsername":["upn","preferred_username","email"]},"clientID":"b4fd3472-696a-4397-ad90-16e20a008dbf","clientSecret":{"name":"cloudrunners-dk-ocp4aad"},"extraScopes":[],"issuer":"https://login.microsoftonline.com/1aaaea9d-df3e-4ce7-a55d-43de56e79442"},"type":"OpenID"}]}}
+    release.openshift.io/create-only: "true"
+  creationTimestamp: "2022-10-03T19:04:51Z"
+  generation: 19
+  name: cluster
+  ownerReferences:
+    - apiVersion: config.openshift.io/v1
+      kind: ClusterVersion
+      name: version
+      uid: 34b5b015-9591-4adf-a375-598d0f714c43
+  resourceVersion: "484802465"
+  uid: d0acafe8-9777-45be-ae9a-002de415148a
+spec:
+  identityProviders:
+    - mappingMethod: claim
+      name: azureAD
+      openID:
+        claims:
+          email:
+            - email
+          name:
+            - name
+          preferredUsername:
+            - upn
+            - preferred_username
+            - email
+        clientID: b4fd3472-696a-4397-ad90-16e20a008dbf
+        clientSecret:
+          name: cloudrunners-dk-ocp4aad
+        extraScopes: []
+        issuer: https://login.microsoftonline.com/1aaaea9d-df3e-4ce7-a55d-43de56e79442
+      type: OpenID
+  templates:
+    login:
+      name: login-template
+    providerSelection:
+      name: providers-template

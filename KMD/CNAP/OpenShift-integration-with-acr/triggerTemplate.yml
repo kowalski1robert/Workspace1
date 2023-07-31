@@ -1,0 +1,51 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: acr-trigger-template
+  namespace: mxb
+  labels:
+    app: acr-integration
+spec:
+  params:
+    - name: publishedHelmTag
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: acr-run-pipeline-
+        labels:
+          app: acr-integration
+      spec:
+        params:
+          - name: PublishedHelmTag
+            value: $(tt.params.publishedHelmTag)
+        pipelineRef:
+          name: acr-test-pipeline
+        # pipelineSpec:
+        #   params:
+        #     - name: PublishedHelmTag2
+        #       value: $(params.PublishedHelmTag1)
+        #   tasks:
+        #     - name: test
+        #       taskSpec:
+        #         params:
+        #           - name: PublishedNameTag3
+        #             value: $(params.PublishedHelmTag2)
+        #         steps:
+        #           - name: info
+        #             image: bash
+        #             command: ["bash", "-c"]
+        #             args:
+        #               - echo $(params.PublishedHelmTag3)
+    # - apiVersion: tekton.dev/v1beta1
+    #   kind: TaskRun
+    #   metadata:
+    #     generateName: acr-run-task
+    #   spec:
+    #     taskSpec:
+    #       steps:
+    #         - name: info
+    #           image: bash
+    #           command: ["bash", "-c"]
+    #           args:
+    #             - echo $(params.publishedHelmTag)

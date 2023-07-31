@@ -1,0 +1,12 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleNotification
+metadata:
+  name: example3
+spec:
+  text: Second bottom banner
+  location: BannerBottom # it can be BannerTop or BannerBottom
+  link:
+    href: "https://www.example.com"
+    text: Optional link
+  color: "#fff" # font collor
+  backgroundColor: "#8888ce"

@@ -1,0 +1,43 @@
+##########################################################
+#                                                        #
+#                         SECRET                         #
+#                                                        #
+##########################################################
+apiVersion: v1
+kind: Secret
+metadata:
+  name: config-filebeat
+stringData:
+  beat.yml: |-
+    setup:
+      dashboards.enabled: true
+      # kibana:
+      #   host: "https://kibana-kb-http.eck.svc:5601"
+      #   ssl.certificate_authorities:
+      #     - /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+      #   ssl.verification_mode: none
+
+    filebeat:
+      autodiscover:
+        providers:
+        - type: kubernetes
+          host: ${HOSTNAME}
+          hints:
+            enabled: true
+            default_config:
+              type: container
+              paths:
+              - /var/log/containers/*${data.kubernetes.container.id}.log
+      modules:
+        - module: auditd
+          log:
+            enabled: true
+            var.paths: ["/var/log/audit/audit.log"]
+    processors:
+    - add_cloud_metadata: {}
+    - add_host_metadata: {}
+
+    # output.elasticsearch:
+    #     api_key: ${ID}:${API_KEY}
+    #     hosts: ["https://elasticsearch-es-http.eck.svc:9200"]
+    #     ssl.verification_mode: none

@@ -1,0 +1,1 @@
+Place for all ELK related config produced for CNAP 

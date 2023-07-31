@@ -1,0 +1,4 @@
+VAR:
+  POD_NAME: copy-pod
+  OLD_PVC_NAME: hippo-cloned-from-backup2-repo1
+  NEW_PVC_NAME: hippo-repo1-new-instance

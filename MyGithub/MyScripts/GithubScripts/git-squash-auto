@@ -1,0 +1,32 @@
+#!/bin/bash
+SQUASH_MESSAGE="$(git log --pretty=format:"%s" -1 | sed -E 's/^((squash)|(fixup))\!( )*//g')"
+push=""
+while getopts ":m:p" opt; do
+  case $opt in
+    m)
+      SQUASH_MESSAGE=$OPTARG
+      ;;
+    p)
+      push="push --force"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+declare -i counter=0
+
+while [ $counter -gt -1 ]
+do
+  counter=$counter+1
+  echo "message= $(git log --pretty=format:"%s" -$counter | tail -1)"
+  if [[ "$(git log --pretty=format:"%s" -$counter | tail -1)" == "$SQUASH_MESSAGE" ]]
+  then
+    break
+  fi
+done
+
+git rebase -i --autosquash HEAD~$counter
+
+$($push)

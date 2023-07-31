@@ -1,0 +1,12 @@
+[submodule "GithubScripts"]
+	path = GithubScripts
+	url = git@github.com:kowalski1robert/GithubScripts.git
+[submodule "LaptopEnvironmentSetup"]
+	path = LaptopEnvironmentSetup
+	url = git@github.com:kowalski1robert/LaptopEnvironmentSetup.git
+[submodule "KubernetesScripts"]
+	path = KubernetesScripts
+	url = git@github.com:kowalski1robert/KubernetesScripts.git
+[submodule "SetupRelated"]
+	path = SetupRelated
+	url = git@github.com:kowalski1robert/SetupRelated.git

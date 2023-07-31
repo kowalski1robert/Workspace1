@@ -1,0 +1,22 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tekton-triggers-webhook-secrets-permission
+  namespace: openshift-pipelines
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list", "get"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tekton-triggers-webhook-secrets-permission-binding
+  namespace: openshift-pipelines
+subjects:
+  - kind: ServiceAccount
+    name: tekton-triggers-webhook
+roleRef:
+  kind: Role
+  name: tekton-triggers-webhook-secrets-permission
+  apiGroup: rbac.authorization.k8s.io

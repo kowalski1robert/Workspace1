@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: accept-install-plan
+  namespace: {{ .Values.subscription.namespace }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: kubectl
+          image: bitnami/kubectl:latest
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - |
+              counter=50;
+
+              while [ $counter -gt 0 ]; do
+
+                installedCSV=$(kubectl get sub -n {{ .Values.subscription.namespace }} {{ .Values.subscription.name }} -o jsonpath='{.status.installedCSV}')
+                if [ "{{ .Values.subscription.startingCSV }}" = "$installedCSV" ] ; then
+                   exit 0
+                fi
+          
+                pipelines_install_plan=$(kubectl get installplan -n {{ .Values.subscription.namespace }} | awk '$2 ~ "odf-" && $4=="false" {print $1}')
+                if [ -n "$pipelines_install_plan" ]; then
+                    echo "Openshift-storage install plan: $pipelines_install_plan is approving"
+                    kubectl patch installplan $pipelines_install_plan -n {{ .Values.subscription.namespace }} --type merge --patch '{"spec":{"approved":true}}'
+                fi
+
+
+                sleep 10;
+                counter=$((counter - 1));
+              done; 
+              
+              
+              

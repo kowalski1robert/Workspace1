@@ -1,0 +1,18 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: kibana
+  namespace: eck
+spec:
+  #host: kibana-eck.apps.skat.kmdstratus.com
+  host: kibana-eck.apps.dev.kmdstratus.com
+  to:
+    kind: Service
+    name: kibana-kb-http
+    weight: 100
+  port:
+    targetPort: https
+  tls:
+    termination: reencrypt
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

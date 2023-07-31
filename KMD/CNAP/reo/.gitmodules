@@ -1,0 +1,9 @@
+[submodule "acr-integration"]
+	path = acr-integration
+	url = https://github.com/KMD-A-S-CNAP/reo-acr-integration.git
+[submodule "console-customization"]
+	path = console-customization
+	url = ./console-customization
+[submodule "postgres-backup"]
+	path = postgres-backup
+	url = https://github.com/KMD-A-S-CNAP/postgres-backup.git

@@ -1,0 +1,48 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: VAR.PVC_NAME.VAR
+spec:
+  storageClassName: managed-csi
+  volumeName: VAR.PV_NAME.VAR
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # dataSource:
+  #   kind: PersistentVolumeClaim
+  #   name: hippo-repo1
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: VAR.PV_NAME.VAR
+spec:
+  csi:
+    driver: disk.csi.azure.com
+    volumeHandle: >-
+      /subscriptions/f8f2febc-4706-4754-94fc-f35cc1647b80/resourceGroups/dev-jbrr5-rg/providers/Microsoft.Compute/disks/VAR.PV_NAME.VAR
+    fsType: ext4
+    volumeAttributes:
+      csi.storage.k8s.io/pv/name: VAR.PV_NAME.VAR
+      csi.storage.k8s.io/pvc/name: VAR.PVC_NAME.VAR
+      csi.storage.k8s.io/pvc/namespace: postgres-operator
+      requestedsizegib: "1"
+      skuname: Premium_LRS
+      storage.kubernetes.io/csiProvisionerIdentity: 1679930690247-8081-disk.csi.azure.com
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: managed-csi
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.disk.csi.azure.com/zone
+              operator: In
+              values:
+                - westeurope-VAR.ZONE.VAR

@@ -1,0 +1,3 @@
+VAR:
+  POD_NAME: copy-pod2
+  PVC_NAME: elephant-instance1-v9ct-pgdata

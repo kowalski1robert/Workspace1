@@ -1,0 +1,17 @@
+CLIs=(
+  "jq"
+  "git"
+  "gh"
+  "helm"
+  "kubectl"
+  "nano"
+  "python3"
+  "terraform"
+  "wget"
+)
+
+### instalation loop
+for cli in ${CLIs[@]}
+do
+  sudo apt-get remove -y $cli
+done

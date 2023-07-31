@@ -1,0 +1,11 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: acr-eventListener
+  namespace: mxb
+  labels:
+    app: acr-integration
+spec:
+  serviceAccountName: acr-tekton-triggers-sa
+  triggers:
+    - triggerRef: acr-trigger

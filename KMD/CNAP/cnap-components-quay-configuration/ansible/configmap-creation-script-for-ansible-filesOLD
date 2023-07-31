@@ -1,0 +1,54 @@
+#! /bin/bash
+### The result of a script is creation of configMaps composed from files under dir of script location
+### with additional value of subpath of given subdir (for volume mapping purposes)
+
+###/ SET VARIABLES \###
+
+declare script_full_path=$PWD/$(dirname "$0")
+declare templates_dir_full_path="$script_full_path/../config/templates"
+# declare templates_dir_full_path=$script_full_path/tmp
+declare subdirs_full_paths=$(find $script_full_path/* -type d)
+
+###\ set variables /###
+
+# read -p "Provide name prefix for config maps (e.g. name of the app for which CMs are created):" cms_name_prefix
+
+###/ SCRIPT \###
+
+for subdir_full_path in $subdirs_full_paths; do
+    # get sub path from .*/ansible/
+    subdir_subpath=$(echo $subdir_full_path | sed -e "s|\($script_full_path/\)\(.*\)|\2|")
+    # check if subdir contains at least one .yaml file
+    echo -e "subdir_full_path:\n$subdir_full_path\nsubdir_subpath:\n$subdir_subpath" # --debug
+    # find quay-configuration-scripts/defaults -maxdepth 1 -type f -name "*.yaml*" # --debug
+    found_yamls=($(find $subdir_full_path -maxdepth 1 -type f -name '*.yaml*'))
+
+    echo -e "elements in array with found .yamls:\n${#found_yamls[@]}\n.yamls found:" # --debug
+    for i in ${found_yamls[@]}; do echo $i; done # --debug
+    echo "if found yaml:" # --debug
+
+    if (( ${#found_yamls[@]} > 0 )); then
+        echo "true" # --debug
+
+        # parse config map name
+        cm_name=$(echo $subdir_subpath | sed 's/\//\./g')
+        echo -e "parsed cm_name: $cm_name" # --debug
+
+        kubectl_create_config_map_command="""kubectl create configmap $cm_name 
+            --from-file=$subdir_full_path 
+            --from-literal=path=$subdir_subpath 
+            --dry-run=client 
+            -o=yaml"""  
+        echo $kubectl_create_config_map_command
+        echo "kubectl_create_config_map_command:" # --debug
+        echo "$kubectl_create_config_map_command" | sed -E 's/^( {,8})(.*)/\2/' # --debug
+
+        # create config map .yaml
+        $kubectl_create_config_map_command > $templates_dir_full_path/$cm_name.yaml
+    else
+        echo "false" # --debug
+    fi
+    echo -e "\n" # --debug
+done
+
+###\ script /###

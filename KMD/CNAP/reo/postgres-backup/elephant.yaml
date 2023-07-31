@@ -1,0 +1,131 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"postgres-operator.crunchydata.com/v1beta1","kind":"PostgresCluster","metadata":{"annotations":{"postgres-operator.crunchydata.com/pgbackrest-backup":"2023-05-25T20:55:14Z"},"creationTimestamp":"2023-05-25T20:49:52Z","finalizers":["postgres-operator.crunchydata.com/finalizer"],"generation":1,"name":"elephant","namespace":"postgres-crunchy","resourceVersion":"167866310","uid":"bf6b0f91-254f-4fab-b681-d26598b1552b"},"spec":{"backups":{"pgbackrest":{"image":"registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4","manual":{"options":["--type=full"],"repoName":"repo1"},"repos":[{"name":"repo1","volume":{"volumeClaimSpec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}}}}}],"restore":{"enabled":true,"repoName":"repo1"}}},"image":"registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.6-2","instances":[{"dataVolumeClaimSpec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}}},"name":"instance1","replicas":1}],"port":5432,"postgresVersion":14,"userInterface":{"pgAdmin":{"dataVolumeClaimSpec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}}},"image":"registry.developers.crunchydata.com/crunchydata/crunchy-pgadmin4:ubi8-4.30-10","replicas":1}},"users":[{"databases":["elephant"],"name":"elephant"},{"databases":["elephant"],"name":"reo","options":"superuser"}]},"status":{"conditions":[{"lastTransitionTime":"2023-05-25T20:50:54Z","message":"pgBackRest dedicated repository host is ready","observedGeneration":1,"reason":"RepoHostReady","status":"True","type":"PGBackRestRepoHostReady"},{"lastTransitionTime":"2023-05-25T20:50:55Z","message":"pgBackRest replica create repo is ready for backups","observedGeneration":1,"reason":"StanzaCreated","status":"True","type":"PGBackRestReplicaRepoReady"},{"lastTransitionTime":"2023-05-25T20:51:33Z","message":"pgBackRest replica creation is now possible","observedGeneration":1,"reason":"RepoBackupComplete","status":"True","type":"PGBackRestReplicaCreate"}],"databaseRevision":"6b55f7f66f","instances":[{"name":"instance1","readyReplicas":1,"replicas":1,"updatedReplicas":1}],"monitoring":{"exporterConfiguration":"559c4c97d6"},"observedGeneration":1,"patroni":{"systemIdentifier":"7237225324278632537"},"pgbackrest":{"repoHost":{"apiVersion":"apps/v1","kind":"StatefulSet","ready":true},"repos":[{"bound":true,"name":"repo1","replicaCreateBackupComplete":true,"stanzaCreated":true,"volume":"pvc-8cd15648-e7b4-4f25-898c-9e45057591d7"}]},"proxy":{"pgBouncer":{"postgresRevision":"5c9966f6bc"}},"userInterface":{"pgAdmin":{"usersRevision":"7b5958c7cf"}},"usersRevision":"565cd7b89"}}
+  creationTimestamp: "2023-05-25T20:49:52Z"
+  finalizers:
+  - postgres-operator.crunchydata.com/finalizer
+  generation: 2
+  name: elephant
+  namespace: postgres-crunchy
+  resourceVersion: "167883289"
+  uid: bf6b0f91-254f-4fab-b681-d26598b1552b
+spec:
+  backups:
+    pgbackrest:
+      restore:
+        enabled: true
+        repoName: repo1
+        options:
+        - --type=time
+        - --target="2023-05-25 21:06:31"
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
+      manual:
+        options:
+        - --type=full
+        repoName: repo1
+      repos:
+      - name: repo1
+        volume:
+          volumeClaimSpec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+      restore:
+        enabled: true
+        repoName: repo1
+  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.6-2
+  instances:
+  - dataVolumeClaimSpec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+    name: instance1
+    replicas: 1
+  port: 5432
+  postgresVersion: 14
+  userInterface:
+    pgAdmin:
+      dataVolumeClaimSpec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgadmin4:ubi8-4.30-10
+      replicas: 1
+  users:
+  - databases:
+    - elephant
+    name: elephant
+  - databases:
+    - elephant
+    name: reo
+    options: superuser
+status:
+  conditions:
+  - lastTransitionTime: "2023-05-25T20:50:54Z"
+    message: pgBackRest dedicated repository host is ready
+    observedGeneration: 2
+    reason: RepoHostReady
+    status: "True"
+    type: PGBackRestRepoHostReady
+  - lastTransitionTime: "2023-05-25T20:50:55Z"
+    message: pgBackRest replica create repo is ready for backups
+    observedGeneration: 2
+    reason: StanzaCreated
+    status: "True"
+    type: PGBackRestReplicaRepoReady
+  - lastTransitionTime: "2023-05-25T20:51:33Z"
+    message: pgBackRest replica creation is now possible
+    observedGeneration: 2
+    reason: RepoBackupComplete
+    status: "True"
+    type: PGBackRestReplicaCreate
+  - lastTransitionTime: "2023-05-25T21:06:57Z"
+    message: Manual backup completed successfully
+    observedGeneration: 2
+    reason: ManualBackupComplete
+    status: "True"
+    type: PGBackRestManualBackupSuccessful
+  databaseRevision: 6b55f7f66f
+  instances:
+  - name: instance1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+  monitoring:
+    exporterConfiguration: 559c4c97d6
+  observedGeneration: 2
+  patroni:
+    systemIdentifier: "7237225324278632537"
+  pgbackrest:
+    manualBackup:
+      completionTime: "2023-05-25T21:06:54Z"
+      finished: true
+      id: "2023-05-25T21:06:23Z"
+      startTime: "2023-05-25T21:06:29Z"
+      succeeded: 1
+    repoHost:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      ready: true
+    repos:
+    - bound: true
+      name: repo1
+      replicaCreateBackupComplete: true
+      stanzaCreated: true
+      volume: pvc-8cd15648-e7b4-4f25-898c-9e45057591d7
+  proxy:
+    pgBouncer:
+      postgresRevision: 5c9966f6bc
+  userInterface:
+    pgAdmin:
+      usersRevision: 7b5958c7cf
+  usersRevision: 565cd7b89

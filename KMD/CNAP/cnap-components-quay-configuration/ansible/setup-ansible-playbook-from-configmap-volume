@@ -1,0 +1,39 @@
+#! /bin/bash
+###/ SET VARIABLES \###
+
+declare playbook_directory_full_path=$(echo $PWD/$(dirname "$0") | sed -E 's/([.]|[.][.])\/?//g ; s/(.*)(\/$)/\1/')
+declare playbook_name=$(basename $PWD)
+# in the container the files will be in fact available as symbolic links
+declare ansible_files_paths_needed_directories
+declare ansible_files_paths="""$(find $playbook_directory_full_path -regex ".\/$playbook_name.*")"""
+declare -A ansible_files_destinations_manifest
+
+###\ set variables /###
+
+###/ SCRIPT \###
+
+# compose dict for mapping files to their destinations
+for ansible_file_path in $ansible_files_paths; do
+    # parse ansible file's destination path
+    destination_path=$(echo $ansible_file_path | sed -E 's/_/\//g')
+    # add entry to manifest dict
+    ansible_files_destinations_manifest+=([$ansible_file_path]=$destination_path)
+done
+
+# get from manifest dict what directories are needed for restoring original structure
+ansible_files_paths_needed_directories=$(\ 
+    for manifest_entry_value in ${ansible_files_destinations_manifest[@]}; do echo $manifest_entry_value; done | \
+    sed -E "s/(.*\/)(.*)/\1/ ; s/[.]\/$playbook_name\///" | \
+    sort | \
+    uniq
+)
+
+# create directory structure
+for $destination_directory in ${ansible_files_paths_needed_directories[@]}; mkdir -p $destination_directory; done
+
+# move files to their places
+for manifest_entry_key in ${!ansible_files_destinations_manifest[@]}; do
+    mv $manifest_entry_key ${ansible_files_destinations_manifest[$manifest_entry_key]}
+done
+
+###\ script /###

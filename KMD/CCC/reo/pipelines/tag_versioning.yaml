@@ -1,0 +1,27 @@
+trigger:
+  - main
+  
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- checkout: self
+  persistCredentials: true
+
+- task: PythonScript@0
+  displayName: Compute new tag value
+  inputs:
+    scriptSource: filePath
+    scriptPath: $(Build.SourcesDirectory)/pipelines/pipeline_scripts/versioning.py
+
+- task: Bash@3
+  displayName: Create tag
+  inputs:
+    targetType: "inline"
+    script: |
+      git config --global user.name "BuildService"
+      git config --global user.email "buildservice@kmd.dk"
+      git tag -a $(new_tag) -m "Pipeline tag"
+      git push --tags
+
+  

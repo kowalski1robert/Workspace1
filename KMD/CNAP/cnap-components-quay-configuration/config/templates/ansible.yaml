@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ansible
+  namespace: ansible-test
+spec:
+  containers:
+    - name: ansible
+      image: quay.io/openshift/origin-ansible
+      volumeMounts:
+        - name: quay-configuration-ansible-playbook
+          mountPath: /usr/share/ansible/openshift-ansible/playbooks/quay-configuration
+      command:
+        - /bin/bash
+        - -c
+      args:
+        - |
+          sleep 10000
+  volumes:
+    - name: quay-configuration-ansible-playbook
+      configMap:
+        name: quay-configuration-ansible-playbook

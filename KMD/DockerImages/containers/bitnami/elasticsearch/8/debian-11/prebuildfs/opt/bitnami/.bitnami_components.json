@@ -1,0 +1,20 @@
+{
+    "elasticsearch": {
+        "arch": "amd64",
+        "distro": "debian-11",
+        "type": "NAMI",
+        "version": "8.8.1-0"
+    },
+    "java": {
+        "arch": "amd64",
+        "distro": "debian-11",
+        "type": "NAMI",
+        "version": "17.0.7-7-2"
+    },
+    "yq": {
+        "arch": "amd64",
+        "distro": "debian-11",
+        "type": "NAMI",
+        "version": "4.34.1-2"
+    }
+}

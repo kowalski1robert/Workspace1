@@ -1,0 +1,14 @@
+- name: Create OpenShift Objects for ArgoCD projects
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', item ) | from_yaml }}"
+  loop:
+  - ./templates/argocd-cnap-app-of-apps-project.yaml.j2
+  - ./templates/argocd-cnap-app-of-apps.yaml.j2
+  - ./templates/argocd-cnap-academy-app-of-apps.yaml.j2
+  - ./templates/argocd-cnap-academy-app-of-apps-project.yaml.j2
+
+- name: allow argoCD to create resources in given namespaces
+  shell: |
+    oc label namespace {{ item }} argocd.argoproj.io/managed-by=openshift-gitops
+  loop: "{{ cnap_environments }}"

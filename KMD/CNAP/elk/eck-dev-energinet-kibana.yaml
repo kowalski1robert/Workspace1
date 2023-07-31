@@ -1,0 +1,36 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: eck
+  labels:
+    app: eck
+spec:
+  monitoring:
+    metrics:
+      elasticsearchRefs:
+      - name: elasticsearch
+        namespace: eck    
+  config:
+    monitoring.ui.ccs.enabled: false
+  version: 8.4.2
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+
+  podTemplate:
+    metadata:
+      labels:
+        app: eck
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            limits:
+              cpu: '1'
+              memory: 2.5Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+
+

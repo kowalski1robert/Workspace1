@@ -1,0 +1,73 @@
+{
+  "level": "info",
+  "ts": "2023-02-07T13:08:37.710Z",
+  "logger": "eventlistener.event-broadcaster",
+  "caller": "record/event.go:285",
+  "msg": "Event(v1.ObjectReference{Kind:\"EventListener\", Namespace:\"mxb\", Name:\"acr-eventlistener\", UID:\"\", APIVersion:\"v1beta1\", ResourceVersion:\"\", FieldPath:\"\"}): type: 'Normal' reason: 'dev.tekton.event.triggers.started.v1' ",
+  "commit": "d460f02"
+}
+{
+  "level": "info",
+  "ts": "2023-02-07T13:08:37.728Z",
+  "logger": "eventlistener.event-broadcaster",
+  "caller": "record/event.go:285",
+  "msg": "Event(v1.ObjectReference{Kind:\"EventListener\", Namespace:\"mxb\", Name:\"acr-eventlistener\", UID:\"68f08385-c66b-4e5a-8b40-b070e97a101e\", APIVersion:\"triggers.tekton.dev/v1beta1\", ResourceVersion:\"326485139\", FieldPath:\"\"}): type: 'Normal' reason: 'dev.tekton.event.triggers.done.v1' ",
+  "commit": "d460f02"
+}
+{
+  "level": "info",
+  "ts": "2023-02-07T13:08:37.742Z",
+  "logger": "eventlistener",
+  "caller": "sink/sink.go:409",
+  "msg": "ResolvedParams : [{Name:publishedHelmTag Value:acrtest-nginx-1.0.2.tgz}]",
+  "commit": "d460f02",
+  "eventlistener": "acr-eventlistener",
+  "namespace": "mxb",
+  "/triggers-eventid": "d4228ebd-8aaa-4111-9b90-90178a07d3a0",
+  "eventlistenerUID": "68f08385-c66b-4e5a-8b40-b070e97a101e",
+  "/trigger": "acr-trigger"
+}
+{
+  "level": "info",
+  "ts": "2023-02-07T13:08:37.744Z",
+  "logger": "eventlistener",
+  "caller": "resources/create.go:98",
+  "msg": "Generating resource: kind: &APIResource{Name:pipelineruns,Namespaced:true,Kind:PipelineRun,Verbs:[delete deletecollection get list patch create update watch],ShortNames:[pr prs],SingularName:pipelinerun,Categories:[tekton tekton-pipelines],Group:tekton.dev,Version:v1beta1,StorageVersionHash:RcAKAgPYYoo=,}, name: acr-run-pipeline-",
+  "commit": "d460f02"
+}
+{
+  "level": "info",
+  "ts": "2023-02-07T13:08:37.744Z",
+  "logger": "eventlistener",
+  "caller": "resources/create.go:106",
+  "msg": "For event ID \"d4228ebd-8aaa-4111-9b90-90178a07d3a0\" creating resource tekton.dev/v1beta1, Resource=pipelineruns",
+  "commit": "d460f02"
+}
+{
+  "level": "error",
+  "ts": "2023-02-07T13:08:37.749Z",
+  "logger": "eventlistener",
+  "caller": "sink/sink.go:524",
+  "msg": "problem creating obj: &errors.errorString{s:\"couldn't create resource with group version kind \\\"tekton.dev/v1beta1, Resource=pipelineruns\\\": admission webhook \\\"webhook.pipeline.tekton.dev\\\" denied the request: mutation failed: cannot decode incoming new object: json: unknown field \\\"value\\\"\"}",
+  "commit": "d460f02",
+  "eventlistener": "acr-eventlistener",
+  "namespace": "mxb",
+  "/triggers-eventid": "d4228ebd-8aaa-4111-9b90-90178a07d3a0",
+  "eventlistenerUID": "68f08385-c66b-4e5a-8b40-b070e97a101e",
+  "/trigger": "acr-trigger",
+  "stacktrace": "github.com/tektoncd/triggers/pkg/sink.Sink.CreateResources\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:524\ngithub.com/tektoncd/triggers/pkg/sink.Sink.processTrigger\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:412\ngithub.com/tektoncd/triggers/pkg/sink.Sink.HandleEvent.func1\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:196"
+}
+{
+  "level": "error",
+  "ts": "2023-02-07T13:08:37.749Z",
+  "logger": "eventlistener",
+  "caller": "sink/sink.go:413",
+  "msg": "couldn't create resource with group version kind \"tekton.dev/v1beta1, Resource=pipelineruns\": admission webhook \"webhook.pipeline.tekton.dev\" denied the request: mutation failed: cannot decode incoming new object: json: unknown field \"value\"",
+  "commit": "d460f02",
+  "eventlistener": "acr-eventlistener",
+  "namespace": "mxb",
+  "/triggers-eventid": "d4228ebd-8aaa-4111-9b90-90178a07d3a0",
+  "eventlistenerUID": "68f08385-c66b-4e5a-8b40-b070e97a101e",
+  "/trigger": "acr-trigger",
+  "stacktrace": "github.com/tektoncd/triggers/pkg/sink.Sink.processTrigger\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:413\ngithub.com/tektoncd/triggers/pkg/sink.Sink.HandleEvent.func1\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:196"
+}

@@ -1,0 +1,45 @@
+{
+    "params": {
+        "timeSize": 5,
+        "timeUnit": "m",
+        "count": {
+            "value": 1,
+            "comparator": "less than"
+        },
+        "criteria": [
+            {
+                "field": "kubernetes.container.name",
+                "comparator": "equals",
+                "value": "filebeat"
+            }
+        ],
+        "groupBy": [
+            "agent.name"
+        ]
+    },
+    "consumer": "alerts",
+    "schedule": {
+        "interval": "1m"
+    },
+    "tags": [
+        "filebeat",
+        "missing-data"
+    ],
+    "name": "Filebeat Missing Data",
+    "rule_type_id": "logs.alert.document.count",
+    "notify_when": "onActionGroupChange",
+    "actions": [
+        {
+            "group": "logs.threshold.fired",
+            "id": "cdd34190-91ac-11ed-a55e-b75dd79744a2",
+            "params": {
+                "documents": [
+                    {
+                        "alert_id": "{{alert.id}}",
+                        "full_internal_message": "{{context.internalFullMessage}}"
+                    }
+                ]
+            }
+        }
+    ]
+}

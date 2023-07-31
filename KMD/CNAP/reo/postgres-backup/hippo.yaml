@@ -1,0 +1,112 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  annotations:
+    postgres-operator.crunchydata.com/pgbackrest-backup: "2023-05-25T20:52:38Z"
+  creationTimestamp: "2023-05-25T20:34:16Z"
+  finalizers:
+  - postgres-operator.crunchydata.com/finalizer
+  generation: 1
+  name: hippo
+  namespace: postgres-crunchy
+  resourceVersion: "167862682"
+  uid: 1a2866fe-2caf-4b4a-97b0-bf8f5a0c4e76
+spec:
+  backups:
+    pgbackrest:
+      manual:
+        repoName: repo1
+        options:
+        - --type=full
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
+      repos:
+      - name: repo1
+        volume:
+          volumeClaimSpec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+      restore:
+        enabled: true
+        repoName: repo1
+  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.6-2
+  instances:
+  - dataVolumeClaimSpec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+    name: instance1
+    replicas: 1
+  port: 5432
+  postgresVersion: 14
+  userInterface:
+    pgAdmin:
+      dataVolumeClaimSpec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgadmin4:ubi8-4.30-10
+      replicas: 1
+  users:
+  - databases:
+    - hippo
+    name: hippo
+  - databases:
+    - hippo
+    name: reo
+    options: superuser
+status:
+  conditions:
+  - lastTransitionTime: "2023-05-25T20:34:50Z"
+    message: pgBackRest dedicated repository host is ready
+    observedGeneration: 1
+    reason: RepoHostReady
+    status: "True"
+    type: PGBackRestRepoHostReady
+  - lastTransitionTime: "2023-05-25T20:34:51Z"
+    message: pgBackRest replica create repo is ready for backups
+    observedGeneration: 1
+    reason: StanzaCreated
+    status: "True"
+    type: PGBackRestReplicaRepoReady
+  - lastTransitionTime: "2023-05-25T20:35:27Z"
+    message: pgBackRest replica creation is now possible
+    observedGeneration: 1
+    reason: RepoBackupComplete
+    status: "True"
+    type: PGBackRestReplicaCreate
+  databaseRevision: f886c77f4
+  instances:
+  - name: instance1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+  monitoring:
+    exporterConfiguration: 559c4c97d6
+  observedGeneration: 1
+  patroni:
+    systemIdentifier: "7237221232447729757"
+  pgbackrest:
+    repoHost:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      ready: true
+    repos:
+    - bound: true
+      name: repo1
+      replicaCreateBackupComplete: true
+      stanzaCreated: true
+      volume: pvc-19c51226-9e37-4829-88de-46f661b89b80
+  proxy:
+    pgBouncer:
+      postgresRevision: 5c9966f6bc
+  userInterface:
+    pgAdmin:
+      usersRevision: 64b56688b9
+  usersRevision: 56cc7795

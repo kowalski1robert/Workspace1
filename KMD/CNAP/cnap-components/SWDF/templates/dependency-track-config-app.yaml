@@ -1,0 +1,23 @@
+{{ if .Values.cnap.dependencyTrackConfig.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dependency-track-config
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    kmd.cnap/argocd-sync-waves-enabled: "true"
+spec:
+  destination:
+    namespace: dependency-track
+    server: https://kubernetes.default.svc
+  source:
+    path: config
+    repoURL: https://github.com/KMD-A-S-CNAP/cnap-components-dependency-track
+    targetRevision: HEAD
+  project: argocd-cnap-app-of-apps-project
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+{{ end }}

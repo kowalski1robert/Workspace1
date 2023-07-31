@@ -1,0 +1,3 @@
+installation:
+manual postgres crunchy operator; after that:
+https://access.crunchydata.com/documentation/postgres-operator/v5/quickstart/#create-a-postgres-cluster

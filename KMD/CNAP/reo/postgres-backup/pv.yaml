@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: elephant-repo1-cloned
+spec:
+  capacity:
+    storage: 1Gi
+  csi:
+    driver: disk.csi.azure.com
+    volumeHandle: >-
+      /subscriptions/f8f2febc-4706-4754-94fc-f35cc1647b80/resourcegroups/swdf01-2cn65-rg/providers/Microsoft.Compute/disks/test
+    fsType: ext4
+    volumeAttributes:
+      csi.storage.k8s.io/pv/name: test
+      csi.storage.k8s.io/pvc/name: hippo-repo1
+      csi.storage.k8s.io/pvc/namespace: postgres-crunchy
+      requestedsizegib: '1'
+      skuname: Premium_LRS
+  accessModes:
+    - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: postgres-crunchy
+    name: hippo-repo1

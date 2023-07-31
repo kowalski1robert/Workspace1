@@ -1,0 +1,209 @@
+##########################################################
+#                                                        #
+#                         BEAT                           #
+#                                                        #
+##########################################################
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  name: metricbeat-hosts
+  namespace: eck
+spec:
+  monitoring:
+    metrics:
+      elasticsearchRefs:
+        - name: elasticsearch
+          namespace: eck
+  elasticsearchRef:
+    name: elasticsearch
+    namespace: eck
+  kibanaRef:
+    name: kibana
+  secureSettings:
+    - secretName: api-key-metricbeat
+  configRef:
+    secretName: config-metricbeat
+  type: metricbeat
+  version: 8.4.2
+
+  #
+  # DaemonSet
+  #
+  daemonSet:
+    podTemplate:
+      spec:
+        affinity:
+          nodeAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/infra
+                      operator: In
+                      values:
+                        - ""
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/os
+                      operator: In
+                      values:
+                        - linux
+
+        serviceAccountName: metricbeat
+        automountServiceAccountToken: true # some older Beat versions are depending on this settings presence in k8s context
+
+        # Elastic keystore init container
+        initContainers:
+          - name: elastic-internal-init-keystore
+            resources: # override the default resources set by the operator
+              limits:
+                cpu: 100m
+                memory: 300Mi
+              requests:
+                cpu: 100m
+                memory: 300Mi
+            securityContext:
+              privileged: true
+              runAsUser: 0
+
+        # Metricbeat container
+        containers:
+          - args: ["-e", "-c", "/etc/beat.yml", "-system.hostfs=/hostfs"]
+            name: metricbeat
+            resources:
+              limits:
+                memory: 700Mi
+                cpu: 1000m
+              requests:
+                cpu: 100m
+                memory: 300Mi
+            securityContext:
+              privileged: true
+              runAsUser: 0
+            volumeMounts:
+              - mountPath: /hostfs/sys/fs/cgroup
+                name: cgroup
+              - mountPath: /var/run/docker.sock
+                name: dockersock
+              - mountPath: /hostfs/proc
+                name: proc
+            env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+
+        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: true # Allows to provide richer host metadata
+        terminationGracePeriodSeconds: 30
+
+        volumes:
+          - hostPath:
+              path: /sys/fs/cgroup
+            name: cgroup
+          - hostPath:
+              path: /var/run/docker.sock
+            name: dockersock
+          - hostPath:
+              path: /proc
+            name: proc
+---
+##########################################################
+#                                                        #
+#                     CLUSTER ROLE                       #
+#                                                        #
+##########################################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metricbeat
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - namespaces
+      - events
+      - pods
+      - persistentvolumes
+      - persistentvolumeclaims
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "extensions"
+    resources:
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+      - deployments
+      - replicasets
+      - daemonsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/stats
+      - nodes/metrics
+    verbs:
+      - get
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - "*"
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+---
+##########################################################
+#                                                        #
+#                    SERVICE ACCOUNT                     #
+#                                                        #
+##########################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metricbeat
+  namespace: eck
+---
+##########################################################
+#                                                        #
+#                 CLUSTER ROLE BINDING                   #
+#                                                        #
+##########################################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metricbeat
+subjects:
+  - kind: ServiceAccount
+    name: metricbeat
+    namespace: eck
+roleRef:
+  kind: ClusterRole
+  name: metricbeat
+  apiGroup: rbac.authorization.k8s.io

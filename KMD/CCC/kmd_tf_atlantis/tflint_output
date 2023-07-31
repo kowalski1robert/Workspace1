@@ -1,0 +1,72 @@
+10 issue(s) found:
+
+Warning: terraform "required_version" attribute is required (terraform_required_version)
+
+  on  line 0:
+   (source code not available)
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_required_version.md
+
+Warning: Interpolation-only expressions are deprecated in Terraform v0.12.14 (terraform_deprecated_interpolation)
+
+  on main.tf line 17:
+  17:     "${var.jumphost_subnet_name}" = {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_deprecated_interpolation.md
+
+Warning: Interpolation-only expressions are deprecated in Terraform v0.12.14 (terraform_deprecated_interpolation)
+
+  on main.tf line 40:
+  40:     "${var.app_service_subnet_name}" = {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_deprecated_interpolation.md
+
+Warning: Interpolation-only expressions are deprecated in Terraform v0.12.14 (terraform_deprecated_interpolation)
+
+  on main.tf line 46:
+  46:     "${var.app_service_subnet_name}" = {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_deprecated_interpolation.md
+
+Warning: Missing version constraint for provider "azurerm" in "required_providers" (terraform_required_providers)
+
+  on terraform.tf line 1:
+   1: provider "azurerm" {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_required_providers.md
+
+Warning: variable "cluster_name" is declared but not used (terraform_unused_declarations)
+
+  on variables.tf line 112:
+ 112: variable "cluster_name" {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_unused_declarations.md
+
+Warning: variable "aks_identity_type" is declared but not used (terraform_unused_declarations)
+
+  on variables.tf line 116:
+ 116: variable "aks_identity_type" {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_unused_declarations.md
+
+Warning: variable "default_node_pool_specs" is declared but not used (terraform_unused_declarations)
+
+  on variables.tf line 120:
+ 120: variable "default_node_pool_specs" {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_unused_declarations.md
+
+Warning: variable "node_pool_subnet_name" is declared but not used (terraform_unused_declarations)
+
+  on variables.tf line 128:
+ 128: variable "node_pool_subnet_name" {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_unused_declarations.md
+
+Warning: variable "pod_subnet_name" is declared but not used (terraform_unused_declarations)
+
+  on variables.tf line 132:
+ 132: variable "pod_subnet_name" {
+
+Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.1.0/docs/rules/terraform_unused_declarations.md
+

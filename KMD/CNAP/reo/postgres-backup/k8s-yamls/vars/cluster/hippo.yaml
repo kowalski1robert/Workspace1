@@ -1,0 +1,5 @@
+VAR:
+  CLUSTER_NAME: hippo
+  BACKUP_REPO_NAME: repo1
+  OLD_CLUSTER_NAME: hippo
+  BACKUP_SCHEME: "0-59 11-14 * * *"

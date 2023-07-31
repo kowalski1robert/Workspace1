@@ -1,0 +1,4 @@
+VAR:
+  CLUSTER_NAME: elephant
+  BACKUP_REPO_NAME: repo1
+  BACKUP_SCHEME: 0 0 0 0 0

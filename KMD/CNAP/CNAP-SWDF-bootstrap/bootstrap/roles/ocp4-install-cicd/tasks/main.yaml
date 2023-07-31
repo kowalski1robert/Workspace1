@@ -1,0 +1,5 @@
+
+- include_tasks: cicd.yaml
+  loop: "{{ namespaces }}"
+  loop_control:
+    loop_var: namespace

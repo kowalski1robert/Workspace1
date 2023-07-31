@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnap-academy-app-of-apps
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: cicd
+    server: https://kubernetes.default.svc
+  project: argocd-cnap-academy-app-of-apps-project
+  source:
+    path: apps
+    repoURL: https://github.com/KMD-A-S-CNAP/cnap-academy-apps
+    targetRevision: release-v0.0.1
+    directory:
+      recurse: true
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false

@@ -1,0 +1,14 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    operators.coreos.com/odf-operator.openshift-storage: ''
+  name: {{ .Values.subscription.name }}
+  namespace: {{ .Values.subscription.namespace }}
+spec:
+  channel: {{ .Values.subscription.channel }}
+  installPlanApproval: Manual
+  name: {{ .Values.subscription.name }}
+  source: {{ .Values.subscription.source }}
+  sourceNamespace: {{ .Values.subscription.sourceNamespace }}
+  startingCSV: {{ .Values.subscription.startingCSV }}

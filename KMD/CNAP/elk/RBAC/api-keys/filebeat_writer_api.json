@@ -1,0 +1,15 @@
+{
+  "name": "filebeat-writer-1y", 
+  "expiration": "365d",
+  "role_descriptors": {
+    "filebeat_writer": { 
+      "cluster": ["monitor", "read_ilm"],
+      "index": [
+        {
+          "names": ["filebeat-*"],
+          "privileges": ["create_doc", "auto_configure", "create_index", "view_index_metadata"]
+        }
+      ]
+    }
+  }
+}

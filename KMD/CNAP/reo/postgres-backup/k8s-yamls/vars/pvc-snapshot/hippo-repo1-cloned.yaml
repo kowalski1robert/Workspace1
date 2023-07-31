@@ -1,0 +1,4 @@
+VAR:
+  PVC_NAME: hippo-repo1-cloned
+  PV_NAME: hippo-repo1-cloned
+  PV_SNAPSHOT_NAME: hippo-repo1-snapshot

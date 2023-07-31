@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: acr-test-pipeline
+  labels:
+    app: acr-integration
+spec:
+  # params:
+  #   - name: publishedHelmTag
+  # tasks:
+  #   - name: test
+  #     # params:
+  #     #   - name: publishedHelmTag
+  #     #     value: "$(params.publishedHelmTag)"
+  #     taskSpec:
+  #       steps:
+  #         - name: info
+  #           image: ubuntu
+  #           script: echo "helm chart $(publishedHelmTag) received"
+  params:
+    - name: PublishedHelmTag
+  tasks:
+    - name: test
+      # params:
+      #   - name: PublishedNameTag2
+      #     value: $(params.PublishedHelmTag)
+      taskSpec:
+        # params:
+        #   - name: PublishedNameTag3
+        #     default: $(params.PublishedHelmTag2)
+        steps:
+          - name: info
+            image: bash
+            # command: ["bash", "-c"]
+            # args:
+            # - echo "$(params["PublishedHelmTag"])"
+            script: |
+              echo "$(params["PublishedHelmTag"])"

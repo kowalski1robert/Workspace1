@@ -1,0 +1,6 @@
+{
+  "password": "$PASSWORD",
+  "roles": [
+    "$ROLES"
+  ]
+}

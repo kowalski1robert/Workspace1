@@ -1,0 +1,278 @@
+- name: Add cluster RoleBinding to the testkube projects
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'testkube-cluster-role-testkube-role-binding.yaml.j2') }}"
+
+- name: Add Testkube service proxy Role
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'testkube-service-proxy-role.yaml.j2') }}"
+
+- name: Add Testkube service proxy RoleBinding
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'testkube-service-proxy-role-binding.yaml.j2') }}"
+
+- name: Add RoleBinding to the testkube projects
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'testkube-executor-rbac.yaml.j2') }}"
+
+- name: Add RoleBinding to the devsecops projects
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-rb.yaml.j2') }}"
+
+- name: Install nexus
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-nexus.yaml.j2') }}"
+
+- name: add permissions to use sonarqube-privileged-scc for default service account
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-sonarqube-scc-rbac.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+- name: Install postgres
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-postgres.yaml.j2') }}"
+
+- name: add sonarqube postgres config
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-helm-sonarqube-conf.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+- name: add sonarqube config
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-sonarqube-config.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+
+- name: add sonarqube repo
+  kubernetes.core.helm_repository:
+    name: sonarqube
+    repo_url: "https://SonarSource.github.io/helm-chart-sonarqube"
+
+- name: Deploy latest version of sonarqube
+  kubernetes.core.helm:
+    name: sonarqube
+    chart_ref: sonarqube/sonarqube
+    chart_version: 8.0.0
+    release_namespace: "{{ namespace }}"
+    create_namespace: false
+    values:
+      fullnameOverride: sonarqube
+      OpenShift:
+        enabled: true
+      postgresql:
+        enabled: false
+      serviceAccount:
+        create: true
+        name: cnap-sonarqube-sa
+      jdbcOverwrite:
+        enable: true
+        jdbcUrl: jdbc:postgresql://sonarqube-postgresql:5432/sonarqube
+        jdbcUsername: sonarqube
+        jdbcSecretName: sonarqube-postgres-creds
+        jdbcSecretPasswordKey: SONARQUBE_JDBC_PASSWORD
+
+- name: add sonarqube route
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-sonarqube-route.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+- name: add permissions to use dependency-track-privileged-scc for default service account
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-dependency-track-scc-rbac.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+- name: add dependency-track repo
+  kubernetes.core.helm_repository:
+    name: evryfs-oss
+    repo_url: "https://evryfs.github.io/helm-charts/"
+
+- name: add dependency-track route
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-dependency-track-route.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+- name: Get dependency-track route
+  kubernetes.core.k8s_info:
+    kind: Route
+    api_version: route.openshift.io/v1
+    namespace: "{{ namespace }}"
+    name: dependency-track-apiserver
+  register: r_deptrack_route
+  retries: 10
+  delay: 20
+  until:
+    - r_deptrack_route.resources[0].spec.host is defined
+
+- name: Debug dependency-track route
+  debug:
+    msg: "{{ r_deptrack_route.resources[0].spec.host }}"
+
+- name: Deploy 4.7.0 version of dependency-track
+  kubernetes.core.helm:
+    name: dependency-track
+    chart_ref: evryfs-oss/dependency-track
+    release_namespace: "{{ namespace }}"
+    create_namespace: false
+    values:
+      frontend:
+        image:
+          repository: dependencytrack/frontend
+          tag: 4.7.0
+          pullPolicy: IfNotPresent
+        replicaCount: 1
+        env:
+          - name: API_BASE_URL
+            value: "https://{{ r_deptrack_route.resources[0].spec.host }}"
+      apiserver:
+        image:
+          repository: dependencytrack/apiserver
+          tag: 4.7.0
+          pullPolicy: IfNotPresent
+        resources:
+          # https://docs.dependencytrack.org/getting-started/deploy-docker/
+          requests:
+            cpu: 500m
+            memory: 4608Mi
+          limits:
+            cpu: 4
+            memory: 16Gi
+
+- name: add dependency-track route
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-dependency-track-route.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+#
+- name: Create api-key secret for pipelines to access Dependency-Track
+  ignore_errors: true
+  shell: |
+    oc create secret generic apikey-secret --from-literal=APIKEY=CHANGE_ME -n "{{ namespace }}"
+
+- name: add nexus creds
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cicd-nexus-creds.yaml.j2') }}"
+    namespace: "{{ namespace }}"
+
+# Check Nexus Route
+- name: Get nexus route
+  kubernetes.core.k8s_info:
+    kind: Route
+    api_version: route.openshift.io/v1
+    namespace: "{{ namespace }}"
+    name: nexus
+  register: r_nexus_route
+  retries: 10
+  delay: 20
+  until:
+    - r_nexus_route.resources[0].spec.host is defined
+
+- name: Debug nexus route
+  debug:
+    msg: "{{ r_nexus_route.resources[0].spec.host }}"
+
+- name: Wait for nexus to be running
+  uri:
+    url: http://{{ r_nexus_route.resources[0].spec.host }}
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 10
+  delay: 30
+
+- name: Search for Nexus pods
+  kubernetes.core.k8s_info:
+    namespace: "{{ namespace }}"
+    kind: Pod
+    label_selectors:
+      - app = nexus
+  register: r_nexus_pods
+
+- name: Debug nexus pod name
+  debug:
+    msg: "{{ r_nexus_pods.resources[0].metadata.name }}"
+
+- name: Debug namespace
+  debug:
+    msg: "{{ namespace }}"
+
+- name: Check if CNAP nexus user is present
+  uri:
+    url: "http://{{ r_nexus_route.resources[0].spec.host }}/service/rest/v1/status"
+    method: GET
+    user: nexus-cnap-admin
+    password: nexus3-cnap-admin-password
+    body_format: json
+    force_basic_auth: true
+    validate_certs: no
+    status_code: [200, 401]
+  register: nexus_check_if_user_exists
+
+- name: Debug nexus_check_if_user_exists
+  debug:
+    msg: "{{ nexus_check_if_user_exists.status }}"
+
+- name: Get nexus admin password
+  when: nexus_check_if_user_exists.status == 401
+  kubernetes.core.k8s_exec:
+    namespace: "{{ namespace }}"
+    pod: "{{ r_nexus_pods.resources[0].metadata.name }}"
+    command: cat /nexus-data/admin.password
+  register: r_nexus_admin_password
+
+- name: Debug nexus admin password
+  when: nexus_check_if_user_exists.status == 401
+  debug:
+    msg: "{{ r_nexus_admin_password.stdout }}"
+
+- name: Create nexus admin user for CNAP
+  when: nexus_check_if_user_exists.status == 401
+  uri:
+    url: "http://{{ r_nexus_route.resources[0].spec.host }}/service/rest/v1/security/users"
+    body: "{{ lookup('template', 'post-nexus-create-user.json.j2') }}"
+    method: POST
+    user: admin
+    password: "{{ r_nexus_admin_password.stdout }}"
+    body_format: json
+    force_basic_auth: true
+    validate_certs: no
+
+# Check Sonarqube Route
+- name: Get sonarqube route
+  kubernetes.core.k8s_info:
+    kind: Route
+    api_version: route.openshift.io/v1
+    namespace: "{{ namespace }}"
+    name: sonarqube
+  register: r_sonarqube_route
+  retries: 10
+  delay: 20
+  until:
+    - r_sonarqube_route.resources[0].spec.host is defined
+
+- name: Debug sonarqube route
+  debug:
+    msg: "{{ r_sonarqube_route.resources[0].spec.host }}"
+
+- name: Wait for sonarqube to be running
+  uri:
+    url: https://{{ r_sonarqube_route.resources[0].spec.host }}
+    status_code: 200
+    validate_certs: no
+  register: result
+  until: result.status == 200
+  retries: 10
+  delay: 30

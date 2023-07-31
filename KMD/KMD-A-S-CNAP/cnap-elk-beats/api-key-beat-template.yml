@@ -1,0 +1,16 @@
+# Already created - this is template for future use
+# Change if you want to create a new one
+##########################################################
+#                                                        #
+#                         SECRET                         #
+#                                                        #
+##########################################################
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-key-filebeat
+stringData:
+  ID: <id>
+  API_KEY: <api_key>
+  ENCODED: <encoded>
+  NAME: <name>

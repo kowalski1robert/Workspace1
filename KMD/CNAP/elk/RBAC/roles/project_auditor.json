@@ -1,0 +1,62 @@
+{
+  "metadata": {},
+  "elasticsearch": {
+    "cluster": [],
+    "indices": [
+      {
+        "names": [
+          "filebeat-*",
+          "logs-*",
+          "metricbeat-*",
+          "metrics-*"
+        ],
+        "privileges": [
+          "read",
+          "view_index_metadata"
+        ],
+        "allow_restricted_indices": false
+      }
+    ],
+    "run_as": []
+  },
+  "kibana": [
+    {
+      "base": [],
+      "feature": {
+        "discover": [
+          "all"
+        ],
+        "dashboard": [
+          "all"
+        ],
+        "canvas": [
+          "read"
+        ],
+        "maps": [
+          "read"
+        ],
+        "visualize": [
+          "read"
+        ],
+        "logs": [
+          "read"
+        ],
+        "infrastructure": [
+          "read"
+        ],
+        "apm": [
+          "read"
+        ],
+        "uptime": [
+          "read"
+        ],
+        "observabilityCases": [
+          "read"
+        ]
+      },
+      "spaces": [
+        "cnap"
+      ]
+    }
+  ]
+}

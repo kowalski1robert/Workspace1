@@ -1,0 +1,28 @@
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  annotations:
+    include.release.openshift.io/ibm-cloud-managed: "true"
+    include.release.openshift.io/self-managed-high-availability: "true"
+    include.release.openshift.io/single-node-developer: "true"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"config.openshift.io/v1","kind":"OAuth","metadata":{"annotations":{"include.release.openshift.io/ibm-cloud-managed":"true","include.release.openshift.io/self-managed-high-availability":"true","include.release.openshift.io/single-node-developer":"true","release.openshift.io/create-only":"true"},"creationTimestamp":"2022-10-03T19:04:51Z","generation":5,"name":"cluster","ownerReferences":[{"apiVersion":"config.openshift.io/v1","kind":"ClusterVersion","name":"version","uid":"34b5b015-9591-4adf-a375-598d0f714c43"}],"resourceVersion":"448328072","uid":"d0acafe8-9777-45be-ae9a-002de415148a"},"spec":{"identityProviders":[{"htpasswd":{"fileData":{"name":"htpass-secret"}},"mappingMethod":"claim","name":"htpasswd","type":"HTPasswd"}],"templates":{"login":{"name":"login-template"}}}}
+    release.openshift.io/create-only: "true"
+  creationTimestamp: "2022-10-03T19:04:51Z"
+  generation: 6
+  name: cluster
+  ownerReferences:
+    - apiVersion: config.openshift.io/v1
+      kind: ClusterVersion
+      name: version
+      uid: 34b5b015-9591-4adf-a375-598d0f714c43
+  resourceVersion: "448336610"
+  uid: d0acafe8-9777-45be-ae9a-002de415148a
+spec:
+  identityProviders:
+    - htpasswd:
+        fileData:
+          name: htpass-secret
+      mappingMethod: claim
+      name: htpasswd
+      type: HTPasswd

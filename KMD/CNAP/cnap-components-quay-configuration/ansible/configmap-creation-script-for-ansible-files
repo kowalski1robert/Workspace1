@@ -1,0 +1,61 @@
+#! /bin/bash
+### The result of a script is creation of configMaps composed from files under dir of script location
+### with additional value of subpath of given subdir (for volume mapping purposes)
+
+###/ SET VARIABLES \###
+
+declare script_full_path=$(echo $PWD/$(dirname "$0") | sed -E 's/([.]|[.][.])\/?//g ; s/(.*)(\/$)/\1/')
+# echo "script_full_path: $script_full_path" # --debug
+# parse script full path for sed - escape 
+declare script_full_path_sed_format=$(echo $script_full_path | sed -E 's/\//\\\//g')
+# echo "script_full_path_sed_format: $script_full_path_sed_format" # --debug
+declare templates_dir_full_path="$script_full_path/../config/templates"
+
+declare subdirs_full_paths=$(find $script_full_path/* -type d)
+# get ansible playbooks dirs
+declare -a ansible_playbooks=($(find $script_full_path -type d -maxdepth 1))
+
+###\ set variables /###
+
+###/ SCRIPT \###
+
+# iterate over playbooks
+for current_playbook in ${ansible_playbooks[@]:1:${#ansible_playbooks}}; do 
+    current_playbook=$(basename $current_playbook)
+
+    # kubectl create configmap $current_playbook
+    current_playbook_yamls_paths=($(find $script_full_path/$current_playbook -type f -regex '.*\.yaml.*'))
+    
+    # if none yamls found under dir - get to the next iteration
+    if (( ${#current_playbook_yamls_paths[@]} == 0 )); then continue; fi
+
+    # echo "current_playbook: $current_playbook" # --debug
+    declare -A current_playbook_files_dict=()
+    
+    # for i in ${current_playbook_yamls_paths[@]}; do echo $i; done # --debug
+
+    # iterate over yamls under playbook
+    for current_playbook_yaml_path in ${current_playbook_yamls_paths[@]}; do
+        # echo "current_playbook_yaml_path: $current_playbook_yaml_path" # --debug
+        # parse config map entry key (replace '/' by '_')
+        configmap_entry_name=$(echo $current_playbook_yaml_path | sed -E "s/$script_full_path_sed_format\/// ; s/\//_/g")
+        # echo "configmap_entry_name: $configmap_entry_name" # --debug
+        current_playbook_files_dict+=([$configmap_entry_name]="$current_playbook_yaml_path")
+    done
+
+    # echo "current_playbook_files_dict: $(for entry_key in ${!current_playbook_files_dict[@]}; do echo "$entry_key: ${current_playbook_files_dict[$entry_key]}"; done)" # --debug
+
+    # set kubectl create command
+    kubectl_create_config_map_command="""kubectl create configmap $current_playbook-ansible-playbook 
+            $(for entry_key in ${!current_playbook_files_dict[@]}; do 
+                echo -e "--from-file=$entry_key=${current_playbook_files_dict[$entry_key]}"
+            done)
+            --from-file=$script_full_path/setup-ansible-playbook-from-configmap-volume
+            --dry-run=client 
+            -o=yaml"""
+    # echo "kubectl_create_config_map_command:" # --debug
+    # echo "$kubectl_create_config_map_command" | sed -E 's/^( *)(.*)($)/\2\3 \// ; 1!s/^/    /g' # --debug
+    $kubectl_create_config_map_command > $templates_dir_full_path/$current_playbook-ansible-playbook.yaml
+done
+
+###\ script /###

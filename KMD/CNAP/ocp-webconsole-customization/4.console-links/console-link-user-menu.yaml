@@ -1,0 +1,8 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: example4
+spec:
+  href: "https://www.example.com"
+  location: UserMenu
+  text: Link 3
